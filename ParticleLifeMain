@@ -1,0 +1,836 @@
+import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.Random;
+
+/*The current idea:
+ * Scan if theres a certain radius from it, it so apply the attraction laws, and average them out to find how much it moves and what direction (negative is backwards). 
+ * if not, move it forward one.
+ * add box collisions so they dont go off screen
+ * F = ma
+ * m = 1
+ * 
+ */
+
+/*Level of ai:
+ * minimal:
+ * used only for the method of scaling the forces, while I had the idea I had to consult ai for the best method to do it
+ */
+
+public class ParticleLifeMain extends JPanel implements ActionListener, ChangeListener{
+	
+	private JFrame frame;
+	private JPanel screen, sliderpanel, labelpanel;
+	private ArrayList<Particle> points;
+	private volatile boolean go = false;
+	private JButton start;
+	private Thread thread;
+	private volatile boolean isStepping;
+	private volatile boolean isRunning;
+	
+	
+	private double RtoB, RtoR, RtoG, RtoY, RtoW, BtoR, BtoB, BtoG, BtoY, BtoW, GtoR, GtoB, GtoG, GtoY, GtoW, YtoR, YtoB, YtoG, YtoY, YtoW, WtoR, WtoB, WtoG, WtoY, WtoW;
+	private JButton RtoBb, RtoRb, RtoGb,RtoYb, RtoWb, BtoRb, BtoBb, BtoGb,BtoYb,BtoWb, GtoRb, GtoBb, GtoGb, GtoYb, GtoWb, YtoBb, YtoRb, YtoGb,YtoYb, YtoWb, WtoBb, WtoRb, WtoGb,WtoYb, WtoWb;
+	
+	private JLabel lwl, udl, help, sidel, topl;
+	
+	private JButton back;
+	
+	private double[][] forces;
+	
+	public ParticleLifeMain() {
+		
+		
+
+		lwl = new JLabel("R   B    G   Y    W");
+		lwl.setForeground(Color.WHITE);
+		lwl.setBounds(55, 160, 300, 50);
+		
+		udl = new JLabel("<html>R<br>B<br><br>G<br>Y<br>W<html>");
+		udl.setForeground(Color.WHITE);
+		udl.setBounds(30, 100, 80, 300);
+		
+		help = new JLabel("<html>Gray = Repel with a force of 0.6<br>Blue = Repel with a force of 0.4<br>Cyan = Repel with a force of 0.2<br>White = Neutral<br>Yellow = Attract with a force of 0.2<br>Pink = Attract with a force of 0.4<br>Red = Attract with a force of 0.6<html>");
+		help.setBounds(28, 300, 500, 200);
+		help.setForeground(Color.WHITE);
+		
+		topl = new JLabel("Target Color");
+		topl.setForeground(Color.WHITE);
+		topl.setBounds(65, 140, 300, 50);
+		
+		sidel = new JLabel("<html>A<br>c<br>t<br>i<br>n<br>g<br><br>C<br>o<br>l<br>o<br>r<html>");
+		sidel.setForeground(Color.WHITE);
+		sidel.setBounds(10, 100, 80, 300);
+		
+		frame = new JFrame("Particle Life Simulation");
+		frame.setSize(1600,1000);
+		frame.setLayout(null);
+		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		frame.setResizable(true);
+		back = new JButton("Exit");
+		back.setBackground(Color.DARK_GRAY);
+		back.setForeground(Color.WHITE);
+		back.addActionListener(this);
+		back.setBounds(1, 1, 75, 50);
+		
+		isRunning = true;
+		
+		RtoB = 0.4; //Gray
+		RtoR = 0.0; //Pink
+		RtoG = -0.6; //pink
+		RtoY = 0.2; //white
+		RtoW = -0.4; //blue
+		
+		BtoR = -0.2; //cyan
+		BtoB = 0.0; //red
+		BtoG = 0.4; //yellow
+		BtoY = 0.2; //red
+		BtoW = 0.6; //cyan
+		
+		GtoR = -0.6; //blue
+		GtoB = -0.2; //pink
+		GtoG = 0.0; //red
+		GtoY = 0.6; //white
+		GtoW = 0.0;//ywllow
+		
+		YtoR = 0.2; //pink
+		YtoB = -0.4; //gray
+		YtoG = -0.2; //gray
+		YtoY = 0.0;//red
+		YtoW = -0.2; //yellow
+		
+		WtoR = 0.6;//blue
+		WtoB = -0.4; //pink
+		WtoG = 0.0; //white
+		WtoY = 0.2;//cyan
+		WtoW = 0.0;//red
+		
+		forces = new double[5][5];
+		
+		
+		RtoRb = new JButton();
+		RtoRb.setBounds(50, 200, 20, 20);		
+		RtoRb.setBackground(getColor(RtoR));
+		forces[0][0] = RtoR;
+		
+		RtoBb = new JButton();
+		RtoBb.setBounds(70, 200, 20, 20);		
+		RtoBb.setBackground(getColor(RtoB));
+		forces[0][1] = RtoB;
+		
+		RtoGb = new JButton();
+		RtoGb.setBounds(90, 200, 20, 20);		
+		RtoGb.setBackground(getColor(RtoG));
+		forces[0][2] = RtoG;
+		
+		RtoYb = new JButton();
+		RtoYb.setBounds(110, 200, 20, 20);		
+		RtoYb.setBackground(getColor(RtoY));
+		forces[0][3] = RtoY;
+		
+		RtoWb = new JButton();
+		RtoWb.setBounds(130, 200, 20, 20);		
+		RtoWb.setBackground(getColor(RtoW));
+		forces[0][4] = RtoW;
+		
+		BtoRb = new JButton();
+		BtoRb.setBounds(50, 220, 20, 20);		
+		BtoRb.setBackground(getColor(BtoR));
+		forces[1][0] = BtoR;
+		
+		BtoBb = new JButton();
+		BtoBb.setBounds(70, 220, 20, 20);		
+		BtoBb.setBackground(getColor(BtoB));
+		forces[1][1] = BtoB;
+		
+		BtoGb = new JButton();
+		BtoGb.setBounds(90, 220, 20, 20);		
+		BtoGb.setBackground(getColor(BtoG));
+		forces[1][2] = BtoG;
+		
+		BtoYb = new JButton();
+		BtoYb.setBounds(110, 220, 20, 20);		
+		BtoYb.setBackground(getColor(BtoY));
+		forces[1][3] = BtoY;
+		
+		BtoWb = new JButton();
+		BtoWb.setBounds(130, 220, 20, 20);		
+		BtoWb.setBackground(getColor(BtoW));
+		forces[1][4] = BtoW;
+		
+		GtoRb = new JButton();
+		GtoRb.setBounds(50, 240, 20, 20);		
+		GtoRb.setBackground(getColor(GtoR));
+		forces[2][0] = GtoR;
+		
+		GtoBb = new JButton();
+		GtoBb.setBounds(70, 240, 20, 20);		
+		GtoBb.setBackground(getColor(GtoB));
+		forces[2][1] = GtoB;
+		
+		GtoGb = new JButton();
+		GtoGb.setBounds(90, 240, 20, 20);		
+		GtoGb.setBackground(getColor(GtoG));
+		forces[2][2] = GtoG;
+		
+		GtoYb = new JButton();
+		GtoYb.setBounds(110, 240, 20, 20);		
+		GtoYb.setBackground(getColor(GtoY));
+		forces[2][3] = GtoY;
+		
+		GtoWb = new JButton();
+		GtoWb.setBounds(130, 240, 20, 20);		
+		GtoWb.setBackground(getColor(GtoW));
+		forces[2][4] = GtoW;
+		
+		YtoRb = new JButton();
+		YtoRb.setBounds(50, 260, 20, 20);		
+		YtoRb.setBackground(getColor(YtoR));
+		forces[3][0] = YtoR;
+		
+		YtoBb = new JButton();
+		YtoBb.setBounds(70, 260, 20, 20);		
+		YtoBb.setBackground(getColor(YtoB));
+		forces[3][1] = YtoB;
+		
+		YtoGb = new JButton();
+		YtoGb.setBounds(90, 260, 20, 20);		
+		YtoGb.setBackground(getColor(YtoG));
+		forces[3][2] = YtoG;
+		
+		YtoYb = new JButton();
+		YtoYb.setBounds(110, 260, 20, 20);		
+		YtoYb.setBackground(getColor(YtoY));
+		forces[3][3] = YtoY;
+		
+		YtoWb = new JButton();
+		YtoWb.setBounds(130, 260, 20, 20);		
+		YtoWb.setBackground(getColor(YtoW));
+		forces[3][4] = YtoW;
+		
+		WtoRb = new JButton();
+		WtoRb.setBounds(50, 280, 20, 20);		
+		WtoRb.setBackground(getColor(WtoR));
+		forces[4][0] = WtoR;
+		
+		WtoBb = new JButton();
+		WtoBb.setBounds(70, 280, 20, 20);		
+		WtoBb.setBackground(getColor(WtoB));
+		forces[4][1] = WtoB;
+		
+		WtoGb = new JButton();
+		WtoGb.setBounds(90, 280, 20, 20);		
+		WtoGb.setBackground(getColor(WtoG));
+		forces[4][2] = WtoG;
+		
+		WtoYb = new JButton();
+		WtoYb.setBounds(110, 280, 20, 20);		
+		WtoYb.setBackground(getColor(WtoY));
+		forces[4][3] = WtoY;
+		
+		WtoWb = new JButton();
+		WtoWb.setBounds(130, 280, 20, 20);		
+		WtoWb.setBackground(getColor(WtoW));
+		forces[4][4] = WtoW;
+		
+		
+		
+		
+		
+		RtoRb.addActionListener(this);
+		RtoBb.addActionListener(this);
+		RtoGb.addActionListener(this);
+		RtoYb.addActionListener(this);
+		RtoWb.addActionListener(this);
+		BtoRb.addActionListener(this);
+		BtoBb.addActionListener(this);
+		BtoGb.addActionListener(this);
+		BtoYb.addActionListener(this);
+		BtoWb.addActionListener(this);
+		GtoRb.addActionListener(this);
+		GtoBb.addActionListener(this);
+		GtoGb.addActionListener(this);
+		GtoYb.addActionListener(this);
+		GtoWb.addActionListener(this);
+		YtoRb.addActionListener(this);
+		YtoBb.addActionListener(this);
+		YtoGb.addActionListener(this);
+		YtoYb.addActionListener(this);
+		YtoWb.addActionListener(this);
+		WtoRb.addActionListener(this);
+		WtoBb.addActionListener(this);
+		WtoGb.addActionListener(this);
+		WtoYb.addActionListener(this);
+		WtoWb.addActionListener(this);
+		
+		
+		JPanel panel = new JPanel();
+		panel.setBounds(0,0,1600,1000);
+		panel.setBackground(Color.BLACK);
+		
+		
+		
+		start = new JButton("Off");
+		start.setBounds(50, 75, 200, 50);
+		start.addActionListener(this);
+		points = new ArrayList<Particle>(100);
+		go = false;
+		isStepping = false;
+		screen = new JPanel() { //yay mini inheritence
+			@Override
+			public void paintComponent(Graphics g) {
+				super.paintComponent(g);
+				
+				Graphics2D g2d = (Graphics2D)g;
+				for(Particle p : points) {
+					if(p.type == 0) {
+						g2d.setColor(Color.red);
+					}
+					else if(p.type == 1) {
+						g2d.setColor(Color.blue);
+					}
+					else if(p.type == 2){g2d.setColor(Color.green);}
+					else if(p.type == 3) {
+						g2d.setColor(Color.YELLOW);
+						
+					}
+					else if(p.type == 4) {
+						g2d.setColor(Color.WHITE);
+					}
+					g2d.fillOval((int)Math.round(p.x) - 300, (int)Math.round(p.y) - 100, 2,2);
+				}
+			}
+		};
+		spawnDots();
+		screen.setBounds(300, 50, 1200, 800);
+		screen.setLayout(null);
+		screen.setBorder(BorderFactory.createLineBorder(Color.WHITE) );
+		screen.setBackground(Color.BLACK);
+		this.setLayout(null);
+		this.add(screen);
+		this.setBounds(0,0,1600,1000);
+		this.setBackground(Color.BLACK);
+		frame.add(topl);
+		frame.add(lwl);
+		frame.add(sidel);
+		frame.add(udl);
+		frame.add(start);
+		frame.add(back);
+		//frame.add(shorthandlabel);
+		frame.add(RtoRb);
+		frame.add(help);
+	frame.add(RtoBb);
+	frame.add(RtoGb);
+	frame.add(RtoYb);
+	frame.add(RtoWb);
+		frame.add(BtoRb);
+		frame.add(BtoBb);
+		frame.add(BtoGb);
+		frame.add(BtoYb);
+		frame.add(BtoWb);
+		frame.add(GtoRb);
+		frame.add(GtoBb);
+		frame.add(GtoGb);
+		frame.add(GtoYb);
+		frame.add(GtoWb);
+		frame.add(YtoRb);
+		frame.add(YtoBb);
+		frame.add(YtoGb);
+		frame.add(YtoYb);
+		frame.add(YtoWb);
+		frame.add(WtoRb);
+		frame.add(WtoBb);
+		frame.add(WtoGb);
+		frame.add(WtoYb);
+		frame.add(WtoWb);
+		//frame.add(sliderpanel);
+		frame.add(screen);
+		frame.add(panel);
+		
+		frame.setVisible(true);
+		
+		thread = new Thread(new Runnable() {
+			public void run() {
+				
+				while(isRunning) {
+					if(go) {
+						step();
+					}
+					else {
+					}/*
+					try {
+					Thread.sleep(1);
+					}
+					catch(InterruptedException e) {
+						
+					}*/
+					}
+				
+			}
+		
+		});
+		
+		thread.setDaemon(true);
+		thread.start();
+		
+		
+	}
+	
+	public JSlider drawColor(int start) {
+		JSlider temp = new JSlider(-10, 10, start);
+			temp.setBackground(Color.BLACK);
+			temp.setForeground(Color.WHITE);
+			temp.setMajorTickSpacing(2);
+			temp.setPaintTicks(true);
+			temp.setPaintLabels(true);
+		return temp;
+	}
+	
+	
+	
+	@Override
+	public void stateChanged(ChangeEvent e) {
+		
+	}
+	
+	
+	public void spawnDots() {
+		points.clear();
+		Random hi = new Random();
+		int c = hi.nextInt(5);
+		for(int x = 300; x <= 1500; x+= 11 ) {
+			for(int y = 0; y <= 900; y += 11) {
+				points.add(new Particle(x,y,c));
+				c = hi.nextInt(5);
+			}
+		}
+		screen.repaint();
+	}
+	/*
+	thread = new Thread(new Runnable() {
+		public void run() {
+			
+			while(true) {
+				if(go) {
+					step();
+				}
+				else {
+					System.out.println("KKKKKKKKK");
+				}
+				try {
+				Thread.sleep(1);
+				}
+				catch(InterruptedException e) {
+					
+				}
+				}
+			
+		}
+	
+	});*/
+	
+	@Override
+	public void actionPerformed(ActionEvent e) {
+		if(e.getSource() == back) {
+			isRunning = false;
+			frame.dispose();
+			Main main = new Main();
+		}
+		if(e.getSource() == start) {
+			go = !go;
+			if(go) {
+				start.setText("On");
+			}
+			else if (!go) {
+				start.setText("Off");
+				/*for(int i = points.size() - 1; i > -1; i--){
+					points.remove(i);
+				}*/
+				go = false;
+				while(isStepping) {
+					
+				}
+				points.clear();
+				this.spawnDots();
+			}
+		}
+		
+		if(e.getSource() == RtoRb) {
+			if((int)(RtoR * 10) == 6 ) {
+				RtoR = -0.6;
+			}
+			else {
+				RtoR += 0.2;
+			}
+			forces[0][0] = RtoR;
+			RtoRb.setBackground(getColor(RtoR));
+		}
+		if(e.getSource() == RtoBb) {
+			if((int)(RtoB * 10) == 6 ) {
+				RtoB = -0.6;
+			}
+			else {
+				RtoB += 0.2;
+			}
+			forces[0][1] = RtoB;
+			RtoBb.setBackground(getColor(RtoB));
+		}
+		if(e.getSource() == RtoGb) {
+			if((int)(RtoG * 10) == 6 ) {
+				RtoG = -0.6;
+			}
+			else {
+				RtoG += 0.2;
+			}
+			forces[0][2] = RtoG;
+			RtoGb.setBackground(getColor(RtoG));
+		}
+		if(e.getSource() == RtoYb) {
+			if((int)(RtoY * 10) == 6 ) {
+				RtoY = -0.6;
+			}
+			else {
+				RtoY += 0.2;
+			}
+			forces[0][3] = RtoY;
+			RtoYb.setBackground(getColor(RtoY));
+		}
+		if(e.getSource() == RtoWb) {
+			if((int)(RtoW * 10) == 6 ) {
+				RtoW = -0.6;
+			}
+			else {
+				RtoW += 0.2;
+			}
+			forces[0][4] = RtoW;
+			RtoWb.setBackground(getColor(RtoW));
+		}
+		if(e.getSource() == BtoRb) {
+			if((int)(BtoR * 10) == 6 ) {
+				BtoR = -0.6;
+			}
+			else {
+				BtoR += 0.2;
+			}
+			forces[1][0] = BtoR;
+			BtoRb.setBackground(getColor(BtoR));
+		}
+		if(e.getSource() == BtoBb) {
+			if((int)(BtoB * 10) == 6 ) {
+				BtoB = -0.6;
+			}
+			else {
+				BtoB += 0.2;
+			}
+			forces[1][1] = BtoB;
+			BtoBb.setBackground(getColor(BtoB));
+		}
+		if(e.getSource() == BtoGb) {
+			if((int)(BtoG * 10) == 6 ) {
+				BtoG = -0.6;
+			}
+			else {
+				BtoG += 0.2;
+			}
+			forces[1][2] = BtoG;
+			BtoGb.setBackground(getColor(BtoG));
+		}
+		if(e.getSource() == BtoYb) {
+			if((int)(BtoY * 10) == 6 ) {
+				BtoY = -0.6;
+			}
+			else {
+				BtoY += 0.2;
+			}
+			forces[1][3] = BtoY;
+			BtoYb.setBackground(getColor(BtoY));
+		}
+		if(e.getSource() == BtoWb) {
+			if((int)(BtoW * 10) == 6 ) {
+				BtoW = -0.6;
+			}
+			else {
+				BtoW += 0.2;
+			}
+			forces[1][4] = BtoW;
+			BtoWb.setBackground(getColor(BtoW));
+		}
+		if(e.getSource() == GtoRb) {
+			if((int)(GtoR * 10) == 6 ) {
+				GtoR = -0.6;
+			}
+			else {
+				GtoR += 0.2;
+			}
+			forces[2][0] = GtoR;
+			GtoRb.setBackground(getColor(GtoR));
+		}
+		if(e.getSource() == GtoBb) {
+			if((int)(GtoB * 10) == 6 ) {
+				GtoB = -0.6;
+			}
+			else {
+				GtoB += 0.2;
+			}
+			forces[2][1] = GtoB;
+			GtoBb.setBackground(getColor(GtoB));
+		}
+		if(e.getSource() == GtoGb) {
+			if((int)(GtoG * 10) == 6 ) {
+				GtoG = -0.6;
+			}
+			else {
+				GtoG += 0.2;
+			}
+			forces[2][2] = GtoG;
+			GtoGb.setBackground(getColor(GtoG));
+		}
+		if(e.getSource() == GtoYb) {
+			if((int)(GtoY * 10) == 6 ) {
+				GtoY = -0.6;
+			}
+			else {
+				GtoY += 0.2;
+			}
+			forces[2][3] = GtoY;
+			GtoYb.setBackground(getColor(GtoY));
+		}
+		if(e.getSource() == GtoWb) {
+			if((int)(GtoW * 10) == 6 ) {
+				GtoW = -0.6;
+			}
+			else {
+				GtoW += 0.2;
+			}
+			forces[2][4] = GtoW;
+			GtoWb.setBackground(getColor(GtoW));
+		}
+		if(e.getSource() == YtoRb) {
+			if((int)(YtoR * 10) == 6 ) {
+				YtoR = -0.6;
+			}
+			else {
+				YtoR += 0.2;
+			}
+			forces[3][0] = YtoR;
+			YtoRb.setBackground(getColor(YtoR));
+		}
+		if(e.getSource() == YtoBb) {
+			if((int)(YtoB * 10) == 6 ) {
+				YtoB = -0.6;
+			}
+			else {
+				YtoB += 0.2;
+			}
+			forces[3][1] = YtoB;
+			YtoBb.setBackground(getColor(YtoB));
+		}
+		if(e.getSource() == YtoGb) {
+			if((int)(YtoG * 10) == 6 ) {
+				YtoG = -0.6;
+			}
+			else {
+				YtoG += 0.2;
+			}
+			forces[3][2] = YtoG;
+			YtoGb.setBackground(getColor(YtoG));
+		}
+		if(e.getSource() == YtoYb) {
+			if((int)(YtoY * 10) == 6 ) {
+				YtoY = -0.6;
+			}
+			else {
+				YtoY += 0.2;
+			}
+			forces[3][3] = YtoY;
+			YtoYb.setBackground(getColor(YtoY));
+		}
+		if(e.getSource() == YtoWb) {
+			if((int)(YtoW * 10) == 6 ) {
+				YtoW = -0.6;
+			}
+			else {
+				YtoW += 0.2;
+			}
+			forces[3][4] = YtoW;
+			YtoWb.setBackground(getColor(YtoW));
+		}
+		if(e.getSource() == WtoRb) {
+			if((int)(WtoR * 10) == 6 ) {
+				WtoR = -0.6;
+			}
+			else {
+				WtoR += 0.2;
+			}
+			forces[4][0] = WtoR;
+			WtoRb.setBackground(getColor(WtoR));
+		}
+		if(e.getSource() == WtoBb) {
+			if((int)(WtoB * 10) == 6 ) {
+				WtoB = -0.6;
+			}
+			else {
+				WtoB += 0.2;
+			}
+			forces[4][1] = WtoB;
+			WtoBb.setBackground(getColor(WtoB));
+		}
+		if(e.getSource() == WtoGb) {
+			if((int)(WtoG * 10) == 6 ) {
+				WtoG = -0.6;
+			}
+			else {
+				WtoG += 0.2;
+			}
+			forces[4][2] = WtoG;
+			WtoGb.setBackground(getColor(WtoG));
+		}
+		if(e.getSource() == WtoYb) {
+			if((int)(WtoY * 10) == 6 ) {
+				WtoY = -0.6;
+			}
+			else {
+				WtoY += 0.2;
+			}
+			forces[4][3] = WtoY;
+			WtoYb.setBackground(getColor(WtoY));
+		}
+		if(e.getSource() == WtoWb) {
+			if((int)(WtoW * 10) == 6 ) {
+				WtoW = -0.6;
+			}
+			else {
+				WtoW += 0.2;
+			}
+			forces[4][4] = WtoW;
+			WtoWb.setBackground(getColor(WtoW));
+		}
+	}
+	
+	public Color getColor(double thing) {
+		if(thing >= 0.59) {
+			return Color.red;
+		}
+		if(thing >= 0.39) {
+			return Color.pink;
+		}
+		if(thing >= 0.19) {
+			return Color.yellow;
+		}
+		if(thing >= -0.19) {
+			return Color.WHITE;
+		}
+		if(thing >= -0.39) {
+			return Color.cyan;
+		}
+		if(thing >= -0.59) {
+			return Color.blue;
+		}
+		if(thing >= -1)
+			return Color.gray;
+		return Color.green;
+	}
+	
+	/*Rules:
+	 * if red near blue -> repel by 1
+	 * if red near green -> attract by 2
+	 * if red near red -> attract by 1
+	 * if green near green -> repel by 1
+	 * if green near blue -> attract by 1
+	 * if blue near blue -> attract by 1
+	 */
+	
+	public void step() {
+		isStepping = true;
+		for(Particle p : points) {
+			p.dx2 = 0;
+			p.dy2 = 0;
+				for(Particle po : points) {
+					if(p != po) {
+						double deltax = (po.x - p.x);
+						double deltay = (po.y - p.y);
+					double distance2 = deltax * deltax + deltay * deltay;
+					
+					int potype = po.type;
+					int ptype = p.type;
+					if(distance2 > 0 && distance2 < 3600){
+						double distance = Math.sqrt(distance2);
+						
+						double multfx = (deltax / distance);
+						double multy = (deltay / distance);
+					//if(po.x != p.x && po.y != p.y && Math.abs(po.x - p.x) < 10 && Math.abs(po.y - p.y) < 10) {
+						if(distance < 30) { //if the distance between particles is small, add a repulsion force
+							p.dx2 -= ((30- distance) / 30.0) * multfx * 2.0;
+							p.dy2 -= ((30 - distance) / 30.0) * multy * 2.0;
+						}
+						
+						p.dx2 += forces[ptype][potype] * multfx;
+						p.dy2 += forces[ptype][potype] * multy;
+					}
+					
+					}
+						}
+				p.dx = (p.dx + p.dx2) * .25 + 0.01; //add up all forces plus friction and a natural moving force so they dont stand still
+				p.dy = (p.dy + p.dy2) * .25 + 0.01;
+				p.x += p.dx;
+				p.y += p.dy;
+				if(p.x < 310) {
+					p.x = 310;
+					p.dx = -p.dx;
+					p.dx2 = 0;
+				}
+				else if(p.x > 1490) {
+					p.x = 1490;
+					p.dx = -p.dx;
+					p.dx2 = 0;
+				}
+				if(p.y < 105) {
+					p.y = 105;
+					p.dy = -p.dy;
+					p.dy2 = 0;
+				}
+				else if(p.y > 889) {
+					p.y = 889;
+					p.dy = -p.dy;
+					p.dy2 = 0;
+				}
+
+				
+			}
+		screen.repaint();
+		isStepping = false;
+		}
+	
+
+	
+	
+	public static void main(String args[]) {
+		ParticleLifeMain hi = new ParticleLifeMain();
+		
+		
+	}
+}
+
+class Particle extends JPanel{
+	double x, y, dx, dy, dx2, dy2;
+	int type;
+	public Particle(int xx, int yy, int c) {
+		x = xx;
+		y = yy;
+		dx = 0;
+		dy = 0;
+		dx2 = 0;
+		dy2 = 0;
+		type = c;
+		this.setBounds((int)Math.round(x) - 300, (int)Math.round(y) - 100, 30, 30);
+		this.setLayout(null);
+	}
+	
+	
+}
+
