@@ -1,0 +1,393 @@
+import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.Random;
+
+/*
+ * Important equations:
+ * Omega = number of particles / (number of particles in box 1! * number of particles in box 2!...)
+ * S = Boltzmann constant * ln(omega)
+ * 
+ * The plan:
+ * Set up the entropy of a given system. Move 1 random particle to a neighboring box. Check if the delta entropy is greater than -0.6 or like -0.7, basically allow some decrease because entropy is like that and tends to sometimes be random (to reach the highest highs you much first go down to the lows). If yes, make it the new norm. If no, select another particle
+ */
+
+
+public class EntropyMain implements ActionListener, ChangeListener{
+	
+	private JButton back;
+	
+	private JSlider pSlider, bSlider, PBSlider;
+	
+	
+	private double Logomega; //number of possible microstates itll make sense eventually
+	private int numParticles; //numParticles, make it to a slider
+	private int numBoxes; //number of boxes, keep it the same for now
+	private int numBoxesToStartWithParticles; //self explanatory
+	private double S; //Entropy of a given system
+	private final double k = 1.380649E10-23; //Joules / Kelvin, not relative units (it doesn't equal 1)
+	
+	private JLabel EntropyAtAPoint, numParts, numBoxesWP;
+	private JButton start, reset; //turn the simulation on/off
+	
+	private Thread thread;
+	private JFrame frame;
+	
+	private volatile boolean isRunning, isStepping; //False when the EXIT button is pressed
+	private volatile boolean go; //False when the start button is off
+	private ArrayList<EntropyPanel> panels;
+	
+	public EntropyMain() {
+		numBoxes = 15;
+		numBoxesToStartWithParticles = 1;		
+		numParticles = 100;
+		
+		frame = new JFrame("Statistical Physics Entropy Simulation");
+		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		frame.setSize(1600,1000);
+		frame.setResizable(true);
+		frame.setLayout(null);
+		
+		numParts = new JLabel("There are " + numParticles + " particles in the simulation");
+		numParts.setBackground(Color.BLACK);
+		numParts.setForeground(Color.WHITE);
+		numParts.setBounds(90, 450, 300, 100);
+		frame.add(numParts);
+		
+		numBoxesWP = new JLabel("<html>There is " + numBoxesToStartWithParticles + " 'unit box' that starts the simulation with <br>" + (numParticles / numBoxesToStartWithParticles) +  " particles already in its area<html>");
+		numBoxesWP.setBackground(Color.BLACK);
+		numBoxesWP.setForeground(Color.WHITE);
+		numBoxesWP.setBounds(90, 500, 300, 100);
+		frame.add(numBoxesWP);
+		
+		JPanel border = new JPanel();
+		border.setBackground(Color.BLACK);
+		border.setBounds(649, 74, 752, 752);
+		border.setBorder(BorderFactory.createLineBorder(Color.WHITE) );
+		frame.add(border);
+		
+		JPanel sliderpanel = new JPanel();
+		sliderpanel.setBounds(0, 350, 400, 900);
+		sliderpanel.setBackground(Color.BLACK);
+		
+		pSlider = new JSlider(1, 10000, 100);
+		pSlider.setBackground(Color.BLACK);
+		pSlider.setForeground(Color.WHITE);
+		pSlider.addChangeListener(this);
+		pSlider.setMajorTickSpacing(9999);
+		pSlider.setPaintTicks(true);
+		pSlider.setPaintLabels(true);
+		sliderpanel.add(pSlider);
+		/*
+		bSlider = new JSlider(1, 15, 5);
+		bSlider.setBackground(Color.BLACK);
+		bSlider.setForeground(Color.WHITE);
+		bSlider.setMajorTickSpacing(5);
+		bSlider.setPaintTicks(true);
+		bSlider.setPaintLabels(true);
+		bSlider.addChangeListener(this);
+		sliderpanel.add(bSlider);*/
+		
+		PBSlider = new JSlider(1, 225, 1);
+		PBSlider.setBackground(Color.BLACK);
+		PBSlider.setForeground(Color.WHITE);
+		PBSlider.setMajorTickSpacing(99);
+		PBSlider.setPaintTicks(true);
+		PBSlider.setPaintLabels(true);
+		PBSlider.addChangeListener(this);
+		sliderpanel.add(PBSlider);
+		
+		start = new JButton("Off");
+		start.setBounds(100, 175, 200, 50);
+		start.addActionListener(this);
+		frame.add(start);
+		
+		reset = new JButton("Reset");
+		reset.setBounds(100, 240, 200, 50);
+		reset.addActionListener(this);
+		frame.add(reset);
+		
+		
+		
+		
+		JPanel defaulty = new JPanel();
+		defaulty.setBackground(Color.BLACK);
+		defaulty.setBounds(0,0,1600,1000);
+		
+
+		panels = getPanels();
+		for(EntropyPanel p : panels) {
+			p.repaint();
+			frame.add(p);
+		}
+		Logomega = setOmega(panels);
+		S = setS(Logomega);
+		back = new JButton("Exit");
+		back.setBackground(Color.DARK_GRAY);
+		back.setForeground(Color.WHITE);
+		back.addActionListener(this);
+		back.setBounds(1450, 1, 75, 50);
+		frame.add(border);
+		frame.add(back);
+
+		EntropyAtAPoint = new JLabel("Current Entropy: " + S + " J/K");
+		EntropyAtAPoint.setBackground(Color.BLACK);
+		EntropyAtAPoint.setForeground(Color.WHITE);
+		EntropyAtAPoint.setBounds(130, 260, 1000, 100);
+		frame.add(EntropyAtAPoint);
+		frame.add(sliderpanel);
+		frame.add(defaulty);
+		
+		frame.setVisible(true);
+		
+		isStepping = false;
+		isRunning = true;
+		go = false;
+		thread = new Thread(new Runnable() {
+			public void run() {
+				
+				while(isRunning) {
+					if(go) {
+						step();
+						
+					}
+					else {
+					}
+					try {
+					Thread.sleep(50);
+					}
+					catch(InterruptedException e) {
+						
+					}
+					}
+				
+			}
+		
+		});
+		thread.setDaemon(true);
+		thread.start();
+	}
+	
+	@Override
+	public void stateChanged(ChangeEvent e) {
+		numParticles = (int)Math.round(1 * Math.pow(10000 / 1, pSlider.getValue() / 1000.0));
+		//numBoxes = bSlider.getValue();
+		numBoxesToStartWithParticles = PBSlider.getValue();
+		while(isStepping) {
+			
+		}
+		for(int i = 1; i <= numBoxesToStartWithParticles; i++) {
+			panels.get(i - 1).particles = numParticles / (numBoxesToStartWithParticles);
+		}
+		for(int i = numBoxesToStartWithParticles; i < numBoxes * numBoxes; i++) {
+			panels.get(i).particles = 0;
+		}
+		for(EntropyPanel p : panels) {
+			p.repaint();
+		}
+		/*for(int i = 0; i < numBoxes * numBoxes; i++) {
+			panels.get(i).repaint();
+		}
+		for(int i = numBoxes * numBoxes; i < 225; i++) {
+			
+		}*/
+		Logomega = setOmega(panels);
+		S = setS(Logomega);
+		EntropyAtAPoint.setText("Current Entropy: " + S + " J/K");
+		numParts.setText("There are " + numParticles + " particles in the simulation");
+		if(numBoxesToStartWithParticles > 1) {
+			numBoxesWP.setText("<html>There are " + numBoxesToStartWithParticles + " 'unit boxes' that start the simulation with <br>" + (numParticles / numBoxesToStartWithParticles) +  " particles already in their areas<html>");
+		}
+		else {
+			numBoxesWP.setText("<html>There is " + numBoxesToStartWithParticles + " 'unit box' that starts the simulation with <br>" + (numParticles / numBoxesToStartWithParticles) +  " particles already in its area<html>");
+		}
+		
+	}
+	
+	@Override
+	public void actionPerformed(ActionEvent e) {
+		if(e.getSource() == back) {
+			isRunning = false;
+			frame.dispose();
+			Main hi = new Main();
+		}
+		if(e.getSource() == start) {
+			go = !go;
+			if(go) {
+				start.setText("On");
+			}
+			else {
+				start.setText("Off");
+				
+			}
+		}
+		if(e.getSource() == reset) {
+			go = false;
+			start.setText("Off");
+			while(isStepping) {
+				
+			}
+			for(int i = 1; i <= numBoxesToStartWithParticles; i++) {
+				panels.get(i - 1).particles = numParticles / (numBoxesToStartWithParticles);
+			}
+			for(int i = numBoxesToStartWithParticles; i < numBoxes * numBoxes; i++) {
+				panels.get(i).particles = 0;
+			}
+			for(EntropyPanel p : panels) {
+				p.repaint();
+			}
+			S = 0;
+			Logomega = setOmega(panels);
+			EntropyAtAPoint.setText("Current Entropy: " + S + " J/K");
+		}
+	
+	}
+	
+	
+	
+	public void step() {
+		isStepping = true;
+		Random hi = new Random();
+		boolean betterEntropy = false;
+		for(EntropyPanel p : panels) {
+			p.repaint();
+		}
+		while(!betterEntropy) {
+			
+			int randIndex = hi.nextInt(numBoxes * numBoxes);
+			EntropyPanel randTest = panels.get(randIndex);
+			while(randTest.particles <= 0) {
+				randIndex = hi.nextInt(numBoxes * numBoxes);
+				randTest = panels.get(randIndex);
+			}
+			int[] possibleIndexes = {-1, -1, -1, -1};
+			if(randIndex - numBoxes >= 0) {
+				possibleIndexes[0] = randIndex - numBoxes;
+			}
+			if(randIndex - 1 > 0 && (randIndex - 1) % numBoxes != (numBoxes - 1)) {
+				possibleIndexes[1] = randIndex - 1;
+			}
+			if(randIndex + numBoxes < numBoxes * numBoxes) {
+				possibleIndexes[2] = randIndex + numBoxes;
+			}
+			if(randIndex + 1 < numBoxes * numBoxes && (randIndex + 1) % numBoxes != 0) {
+				possibleIndexes[3] = randIndex + 1;
+			}
+			int randIndex2 = hi.nextInt(4);
+			while(possibleIndexes[randIndex2] == -1) {
+				randIndex2 = hi.nextInt(4);
+			}
+			randTest.particles --;
+			panels.get(possibleIndexes[randIndex2]).particles ++;
+			double tempS = setS(setOmega(panels));
+			double deltaS = tempS - S;
+			if(deltaS >= 0) { //Originally had a hard cutoff of -1E0-5 * k, but switched it to metropolis probability for smoother sims
+				betterEntropy = true;
+				S = tempS;
+			}
+			else if (Math.random() < Math.exp(deltaS / k)){
+				betterEntropy = true;
+				S = tempS;
+			}
+			else {
+				panels.get(possibleIndexes[randIndex2]).particles--;
+				randTest.particles++;
+			} //Uses an entropy driven Metropolis prediction alogrithm to nudge particles towards greater entropy
+			
+		}
+		/*for(EntropyPanel p : panels) {
+			p.repaint();
+		}*/
+		EntropyAtAPoint.setText("Current Entropy: " + S + " J/K");
+		isStepping = false;
+	}
+	
+	
+	
+	public double Logfactorial(int n) {
+		double returner = 0;
+		
+		for(int i = 1; i <= n; i++) {
+			returner += Math.log(i);
+		}
+		return returner;
+	}
+	
+	public double setOmega(ArrayList<EntropyPanel> panels) {
+		double returner = Logfactorial(numParticles);
+		for(EntropyPanel p : panels) {
+			returner -= Logfactorial(p.particles);  //Log Omega = LognumParticles - the sum of logfactorial particles in every microstate
+			 //max is 20 factorial
+		}
+		return returner;
+	}
+	
+	public double setS(double Logomega) {
+		return k * Logomega;
+	}
+	
+	
+	
+	public ArrayList<EntropyPanel> getPanels(){
+		int particles = numParticles;
+		int particlesPerBox = numParticles / (numBoxesToStartWithParticles); //add a slider for this between 1 and numParticles
+		ArrayList<EntropyPanel> p = new ArrayList<EntropyPanel>(1000);
+		int boxnum = 0;
+		for(int y = 1; y <= numBoxes; y++) {
+		for(int i = 1; i <= numBoxes; i++) {
+			
+			EntropyPanel box = new EntropyPanel();
+			if(particles <= 0)
+				particlesPerBox = 0;
+			box.setBounds(i * 50 + 600, y * 50 + 25, 50, 50);
+			box.particles = particlesPerBox;
+			box.BoxNum = boxnum;
+			boxnum ++;
+			p.add(box);
+			particles -= particlesPerBox;
+		}
+		
+		}
+
+		return p;
+	}
+	
+	public void addPanels() {
+		for(EntropyPanel p : panels) {
+			frame.add(p);
+		}
+	}
+	
+	public static void main(String args[]) {
+		EntropyMain hi = new EntropyMain();
+	}
+}
+
+class EntropyPanel extends JPanel{
+	public int particles;
+	public int BoxNum; //this tells which box number it is. So when I move a particle outside of boxnum 0 i can move it to either box num 1 of noxnum 10 (diagonal from the corner)
+	private Random hi;
+	public EntropyPanel() {
+		hi = new Random();
+		this.setBackground(Color.DARK_GRAY);
+		//this.setBorder(BorderFactory.createLineBorder(Color.WHITE));
+	}
+	
+	@Override
+	public void paintComponent(Graphics g) {
+		super.paintComponent(g);
+		
+		Graphics2D g2d = (Graphics2D)g;
+		for(int p = particles; p > 0; p--) {
+			int x = hi.nextInt(50);
+			int y = hi.nextInt(50);
+			g2d.setColor(Color.RED);
+			g2d.fillOval(x, y, 3, 3);
+		}
+	}
+}
