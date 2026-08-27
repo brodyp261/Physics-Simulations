@@ -1,0 +1,355 @@
+import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.concurrent.TimeUnit;
+/*
+ * Level of ai:
+ * Some was definetly used:
+ * mainly with understanding how RK4 works.
+ * none was used in deriving the equation except for checking my work
+ */
+public class DoublePendulum implements ActionListener, ChangeListener{
+	private static final double g = 9.81;
+	private JFrame frame;
+	private JPanel panel;
+	private JButton back;
+	private Paint painty;
+	private volatile boolean go;
+	private volatile boolean isRunning;
+	private JButton gobutton;
+	private JSlider slidertheta1, slidertheta2, slid1, slid2, slidm1, slim2;
+	private JPanel sliderpanel;
+	private JPanel labelPanel;
+	private JLabel theta1l, theta2, l1l, l2l, m1l, m2l,note;
+	
+	public DoublePendulum() {
+		panel = new JPanel();
+		panel.setBackground(Color.BLACK);
+		panel.setBounds(0, 0, 1600, 1000);
+		
+		note = new JLabel("Note: θ2 is an absolute angle");
+		note.setForeground(Color.WHITE);
+		note.setBounds(300,80,300,50);
+		
+		isRunning = true;
+		
+		sliderpanel = new JPanel();
+		sliderpanel.setBounds(-100,0,1600, 150);
+		sliderpanel.setBackground(Color.BLACK);
+		
+		slidertheta1 = new JSlider(0, 360, 0);
+		slidertheta1.setBackground(Color.BLACK);
+		slidertheta1.setForeground(Color.WHITE);
+		slidertheta1.setMajorTickSpacing(90);
+		slidertheta1.setPaintTicks(true);
+		slidertheta1.setPaintLabels(true);
+		slidertheta1.addChangeListener(this);
+		
+		slidertheta2 = new JSlider(0, 360, 0);
+		slidertheta2.setBackground(Color.BLACK);
+		slidertheta2.setForeground(Color.WHITE);
+		slidertheta2.setMajorTickSpacing(90);
+		slidertheta2.setPaintTicks(true);
+		slidertheta2.setPaintLabels(true);
+		slidertheta2.addChangeListener(this);
+		
+		slid1 = new JSlider(30, 210, 200);
+		slid1.setBackground(Color.BLACK);
+		slid1.setForeground(Color.WHITE);
+		slid1.setMajorTickSpacing(25);
+		slid1.setPaintTicks(true);
+		slid1.setPaintLabels(true);
+		slid1.addChangeListener(this);
+		
+		slid2 = new JSlider(20, 110, 100);
+		slid2.setBackground(Color.BLACK);
+		slid2.setForeground(Color.WHITE);
+		slid2.setMajorTickSpacing(25);
+		slid2.setPaintTicks(true);
+		slid2.setPaintLabels(true);
+		slid2.addChangeListener(this);
+		
+		slidm1 = new JSlider(1, 10, 2);
+		slidm1.setBackground(Color.BLACK);
+		slidm1.setForeground(Color.WHITE);
+		slidm1.setMajorTickSpacing(5);
+		slidm1.setPaintTicks(true);
+		slidm1.setPaintLabels(true);
+		slidm1.addChangeListener(this);
+		
+		slim2 = new JSlider(0, 10, 1);
+		slim2.setBackground(Color.BLACK);
+		slim2.setForeground(Color.WHITE);
+		slim2.setMajorTickSpacing(5);
+		slim2.setPaintTicks(true);
+		slim2.setPaintLabels(true);
+		slim2.addChangeListener(this);
+		
+		sliderpanel.add(slidertheta1);
+		sliderpanel.add(slidertheta2);
+		sliderpanel.add(slid1);
+		sliderpanel.add(slid2);
+		sliderpanel.add(slidm1);
+		sliderpanel.add(slim2);
+		
+		painty = new Paint();
+		painty.setBounds(0, 200, 1300, 730);
+		painty.setBorder(BorderFactory.createLineBorder(Color.WHITE));
+		
+		go = false;
+		/*gobutton = new JButton("On");
+		gobutton.setBounds(500, 100, 200, 50);
+		gobutton.addActionListener(this);*/
+		
+		back = new JButton("Exit");
+		back.setBackground(Color.DARK_GRAY);
+		back.setForeground(Color.WHITE);
+		back.addActionListener(this);
+		back.setBounds(1450, 1, 75, 50);
+		
+		theta1l = new JLabel("θ1 = " + painty.theta1 + "\u00B0");
+		theta1l.setForeground(Color.WHITE);
+		theta1l.setBounds(90, 50, 75, 50);
+		
+		theta2 = new JLabel("θ2 = " + painty.theta2 + "\u00B0");
+		theta2.setForeground(Color.WHITE);
+		theta2.setBounds(300, 50, 500, 50);
+		
+		l1l = new JLabel("l1: " + painty.l1);
+		l1l.setForeground(Color.WHITE);
+		l1l.setBounds(505, 50, 500, 50);
+		
+		l2l = new JLabel("l2: " + painty.l2);
+		l2l.setForeground(Color.WHITE);
+		l2l.setBounds(707, 50, 500, 50);
+		
+		m1l = new JLabel("m1: " + painty.m1);
+		m1l.setForeground(Color.WHITE);
+		m1l.setBounds(915, 50, 500, 50);
+		
+		m2l = new JLabel("m2: " + painty.m2);
+		m2l.setForeground(Color.WHITE);
+		m2l.setBounds(1115, 50, 500, 50);
+		
+		
+		gobutton = new JButton("Off");
+		gobutton.setBounds(540, 120, 200, 50);
+		gobutton.addActionListener(this);
+		
+		frame = new JFrame("Double Pendulum Simulation");
+		frame.setLayout(null);
+		frame.setSize(1600,1000);
+		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		frame.setResizable(true);
+		frame.setBackground(Color.BLACK);
+		
+		frame.add(gobutton);
+		frame.add(note);
+		frame.add(theta1l);
+		frame.add(theta2);
+		frame.add(l1l);
+		frame.add(l2l);
+		frame.add(m1l);
+		frame.add(m2l);
+		frame.add(back);
+		frame.add(sliderpanel);
+		frame.add(painty);
+		frame.add(panel);
+		frame.setVisible(true);
+		
+	/*try{Thread.sleep(100);}
+		catch(InterruptedException e) {}*/
+		/*while(true) {
+			/*try {
+			TimeUnit.NANOSECONDS.sleep(1);}
+			catch(InterruptedException e) {
+				Thread.currentThread().interrupt();
+			}*/
+			
+			
+		//}
+		thread.setDaemon(true);
+		thread.start();
+	}
+	
+	
+	public void step() {
+		if(go) {
+		stepRK4();
+		painty.repaint();
+		}
+	}
+	
+	
+	Thread thread = new Thread(new Runnable() {
+		public void run() {
+			while(isRunning) {
+				if(go) {
+				step();
+				}
+				else {
+					painty.dtheta1 = 0;
+					painty.dtheta2 = 0;
+				}
+			}
+		}
+	});
+	
+	@Override
+	public void stateChanged(ChangeEvent e) {
+		painty.theta1 = Math.toRadians(slidertheta1.getValue());
+		painty.theta2 = Math.toRadians(slidertheta2.getValue());
+		painty.l1 = slid1.getValue();
+		painty.l2 = slid2.getValue();
+		painty.m1 = slidm1.getValue();
+		painty.m2 = slim2.getValue();
+		
+		theta1l.setText("θ1 = " + slidertheta1.getValue() + "\u00B0");
+		theta2.setText("θ2 = " + slidertheta2.getValue() + "\u00B0");
+		l1l.setText("l1 = " + painty.l1);
+		l2l.setText("l2 = " + painty.l2);
+		m1l.setText("m1 = " + painty.m1);
+		m2l.setText("m2 = " + painty.m2);
+		
+		painty.repaint();
+	}
+	
+	@Override
+	public void actionPerformed(ActionEvent e) {
+		if(e.getSource() == back) {
+			isRunning = false;
+			frame.dispose();
+			Main hi = new Main();
+		}
+		if(e.getSource() == gobutton) {
+			go = !go;
+			if(go) {
+				gobutton.setText("On");
+				step();
+			}
+			else if (!go) {
+				gobutton.setText("Off");
+			}
+		}
+	}
+	
+	public double thetaequ(double dtheta) {
+		return dtheta;
+	}
+	
+	public double dtheta1equ(double theta1, double theta2, double dtheta1, double dtheta2) {
+		double deltatheta = theta1 - 2 * theta2;
+		double m1 = painty.m1;
+		double m2 = painty.m2;
+		double l1 = painty.l1;
+		double l2 = painty.l2;
+		return (-1 * (2 * m1 + m2) * g * Math.sin(theta1) - m2 * g * Math.sin(deltatheta) - 2 * Math.sin(theta1 - theta2) * m2 * (dtheta2 * dtheta2 * l2 + dtheta1 * dtheta1 * l1 * Math.cos(theta1 - theta2))) / ((2 * m1 + m2 - m2 * Math.cos(2 * theta1 - 2 * theta2)) * l1);
+	}
+	
+	public double dtheta2equ(double theta1, double theta2, double dtheta1, double dtheta2) {
+		double deltatheta = theta1 - theta2;
+		double m1 = painty.m1;
+		double m2 = painty.m2;
+		double l1 = painty.l1;
+		double l2 = painty.l2;
+		return (2 * Math.sin(theta1 - theta2) * (dtheta1 * dtheta1 * l1 * (m1 + m2) + g * (m1 + m2) * Math.cos(theta1) + dtheta2 * dtheta2 * l2 * m2 * Math.cos(theta1 - theta2))) / ((2 * m1 + m2 - m2 * Math.cos(2 * theta1 - 2 * theta2)) * l2);
+	}
+	
+	public void stepRK4() {
+		double stepSize = 0.000004; //probably change it to a lower step size for more accuracy
+		double theta1 = painty.theta1;
+		double theta2 = painty.theta2;
+		double dtheta1 = painty.dtheta1;
+		double dtheta2 = painty.dtheta2;
+		
+		
+		//rk4
+		double k1theta1 = thetaequ(dtheta1);  //derivative of F(theta) is just angular velocity
+		double k1dtheta1 = dtheta1equ(theta1, theta2, dtheta1, dtheta2);
+		double k1theta2 = thetaequ(dtheta2);
+		double k1dtheta2 = dtheta2equ(theta1, theta2, dtheta1, dtheta2);
+		
+		double k2theta1 = thetaequ(dtheta1 + stepSize * .5 * k1theta1);
+		double k2dtheta1 = dtheta1equ(theta1 + stepSize / 2 * k1theta1, theta2 + stepSize / 2 * k1theta2, dtheta1 + stepSize / 2 * k1dtheta1, dtheta2 + stepSize / 2 * k1dtheta2);
+		double k2theta2 = thetaequ(dtheta2 + stepSize / 2 * k1theta2);
+		double k2dtheta2 = dtheta2equ(theta1 + stepSize / 2 * k1theta1, theta2 + stepSize / 2 * k1theta2, dtheta1 + stepSize / 2 * k1dtheta1, dtheta2 + stepSize / 2 * k1dtheta2);
+		
+		double k3theta1 = thetaequ(dtheta1 + stepSize / 2 * k2theta1);
+		double k3dtheta1 = dtheta1equ(theta1 + stepSize / 2 * k2theta1, theta2 + stepSize / 2 * k2theta2, dtheta1 + stepSize / 2 * k2dtheta1, dtheta2 + stepSize / 2 * k2dtheta2);
+		double k3theta2 = thetaequ(dtheta2 + stepSize / 2 * k2theta2);
+		double k3dtheta2 = dtheta1equ(theta1 + stepSize / 2 * k2theta1, theta2 + stepSize / 2 * k2theta2, dtheta1 + stepSize / 2 * k2dtheta1, dtheta2 + stepSize / 2 * k2dtheta2);
+		
+		double k4theta1 = thetaequ(dtheta1 + stepSize * k3theta1);
+		double k4dtheta1 = dtheta1equ(theta1 + stepSize * k3theta1, theta2 + stepSize * k3theta2, dtheta1 + stepSize * k3dtheta1, dtheta2 + stepSize * k3dtheta2);
+		double k4theta2 = thetaequ(dtheta2 + stepSize * k3theta2);
+		double k4dtheta2 = dtheta1equ(theta1 + stepSize * k3theta1, theta2 + stepSize * k3theta2, dtheta1 + stepSize * k3dtheta1, dtheta2 + stepSize * k3dtheta2);
+		
+		theta1 = theta1 + (stepSize / 6) * (k1theta1 + 2 * k2theta1 + 2 * k3theta1 + k4theta1);
+		dtheta1 = dtheta1 + (stepSize / 6) * (k1dtheta1 + 2 * k2dtheta1 + 2 * k3dtheta1 + k4dtheta1);
+		theta2 = theta2 + (stepSize / 6) * (k1theta2 + 2 * k2theta2 + 2 * k3theta2 + k4theta2);
+		dtheta2 = dtheta2 + (stepSize / 6) * (k1dtheta2 + 2 * k2dtheta2 + 2 * k3dtheta2 + k4dtheta2);
+		
+		//reassigning to painty
+		painty.theta1 = theta1;
+		painty.theta2 = theta2;
+		painty.dtheta1 = dtheta1;
+		painty.dtheta2 = dtheta2;
+		
+		
+	}
+	
+	public static void main(String args[]) {
+		System.out.println("Start");
+		DoublePendulum hi = new DoublePendulum();
+	}
+}
+
+
+class Paint extends JPanel{
+	public double m1 = 2;
+	public double m2 = 1;
+	private double x1;
+	private double x2;
+	private double y1;
+	private double y2;
+	public double l1;
+	public double l2;
+	public double theta1, theta2, dtheta1, dtheta2;
+	
+	public Paint() {
+		l1 = 200;
+		l2 = 100;
+		theta1 = 0;
+		theta2 = 0;
+		dtheta1 = 0;
+		dtheta2 = 0;
+		this.setBounds(0, 0, 1600, 1000);
+		this.setBackground(Color.BLACK);
+	}
+	
+	@Override
+	public void paintComponent(Graphics g) {
+		super.paintComponent(g);
+		Graphics2D g2d = (Graphics2D)g;
+		
+		x1 = Math.sin(theta1) * l1;
+		y1 = Math.cos(theta1) * l1;
+		x2 = Math.sin(theta2) * l2 +x1;
+		y2 = Math.cos(theta2) * l2 + y1;
+		
+		g2d.setColor(Color.WHITE);
+		g2d.setStroke(new BasicStroke(2));
+		g2d.drawLine(600, 350, (int)Math.round(x1 + 600), (int)Math.round(y1 + 350));
+		g2d.setColor(Color.RED);
+		g2d.fillOval((int)Math.round(x1 + 595),(int)Math.round(y1 + 345), (int)m1 * 10, (int)m1 * 10);
+		if(m2 != 0) {
+		g2d.setColor(Color.WHITE);
+		g2d.drawLine((int)Math.round(x1 + 600), (int)Math.round(y1 + 350), (int)Math.round(x2 + 600), (int)Math.round(y2 + 350));
+		g2d.setColor(Color.CYAN);
+		g2d.fillOval((int)Math.round(x2 + 595),(int)Math.round(y2 + 345), (int)m2 * 10, (int)m2 * 10);}
+	}
+}
