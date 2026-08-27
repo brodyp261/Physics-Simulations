@@ -1,0 +1,147 @@
+import javax.swing.*;
+
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.*;
+public class Main implements ActionListener{
+	
+	private JButton Hydrobutton, Pendubutton, PLbutton, EButton;
+	private JPanel hi;
+	private JFrame frame;
+	private painty paint;
+	private JLabel HydroDesc, PenduDesc, PLDesc, EDesc;
+	private JButton back;
+	
+	public Main() {
+
+		paint = new painty();
+		HydroDesc = new JLabel("<html>         Calculates the relative probability density at each point in a 3d grid and projects probabilities over a certain threshold on the screen to form the                 predicted atomic orbitals<html>", SwingConstants.CENTER);
+		HydroDesc.setForeground(Color.WHITE);
+		HydroDesc.setBounds(310, 250, 350, 200);
+		HydroDesc.setFont(new Font("Serif", Font.ITALIC, 10));
+		
+		PLDesc = new JLabel("<html>Although not physics intensive, it is still a simulation of life using basic forces of attraction and repulsion whose motion is governed by Newtown's second law (F = ma)");
+		PLDesc.setForeground(Color.WHITE);
+		PLDesc.setBounds(310, 450, 325, 200);
+		PLDesc.setFont(new Font("Serif", Font.ITALIC, 10));
+		
+		paint.setBounds(0, 0, 1600, 300);
+		hi = new JPanel();
+		hi.setBounds(0, 0, 1600, 1000);
+		hi.setLayout(null);
+		hi.setBackground(Color.BLACK);
+		hi.add(PLDesc);
+		hi.add(HydroDesc);
+		
+		PenduDesc = new JLabel("<html>Uses RK4 to approximate the motion of a double pendulum from the 2 given starting angles<html>", SwingConstants.CENTER);
+		PenduDesc.setForeground(Color.WHITE);
+		PenduDesc.setBounds(910, 250, 350, 200);
+		PenduDesc.setFont(new Font("Serif", Font.ITALIC, 10));
+		hi.add(PenduDesc);
+		
+		EDesc = new JLabel("<html>Shows how a system's entropy evolves toward an equilibrium <br>using Metropolis sampling and Boltzmann entropy calculations<html>");
+		EDesc.setForeground(Color.WHITE);
+		EDesc.setBounds(910, 460, 340, 170);
+		EDesc.setFont(new Font("Serif", Font.ITALIC, 10));
+		hi.add(EDesc);
+		
+		EButton = new JButton("Entropy Visualizer");
+		EButton.setBackground(Color.DARK_GRAY);
+		EButton.setForeground(Color.WHITE);
+		EButton.setFocusPainted(false);
+		EButton.setFont(new Font("Serif", Font.PLAIN, 20));
+		EButton.setBounds(900, 450, 350, 75);
+		EButton.addActionListener(this);
+		hi.add(EButton);
+		
+		Pendubutton = new JButton("Double Pendulum");
+		Pendubutton.setBackground(Color.DARK_GRAY);
+		Pendubutton.setForeground(Color.WHITE);
+		Pendubutton.setFocusPainted(false);
+		Pendubutton.setFont(new Font("Serif", Font.PLAIN, 20));
+		Pendubutton.setBounds(900, 250, 350, 75);
+		Pendubutton.addActionListener(this);
+		hi.add(Pendubutton);
+		
+		Hydrobutton = new JButton("Hydrogen Orbital Probability Density");
+		Hydrobutton.setBackground(Color.DARK_GRAY);
+		Hydrobutton.setForeground(Color.WHITE);
+		Hydrobutton.setFocusPainted(false);
+		Hydrobutton.setFont(new Font("Serif", Font.PLAIN, 20));
+		Hydrobutton.setBounds(300, 250, 350, 75);
+		Hydrobutton.addActionListener(this);
+		hi.add(Hydrobutton);
+		
+		PLbutton = new JButton("Particle Life Simulation");
+		PLbutton.setBackground(Color.DARK_GRAY);
+		PLbutton.setForeground(Color.WHITE);
+		PLbutton.setFocusPainted(false);
+		PLbutton.setFont(new Font("Serif", Font.PLAIN, 20));
+		PLbutton.setBounds(300, 450, 350, 75);
+		PLbutton.addActionListener(this);
+		hi.add(PLbutton);
+		
+		hi.add(paint);
+		frame = new JFrame("Physics Simulations");
+		frame.setLayout(null);
+		frame.setSize(1600,1000);
+		frame.setResizable(true);
+		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		
+		back = new JButton("Exit");
+		back.setBackground(Color.DARK_GRAY);
+		back.setForeground(Color.WHITE);
+		back.addActionListener(this);
+		back.setBounds(1450, 1, 75, 50);
+		frame.add(back);
+		
+		frame.add(hi);
+		frame.setVisible(true);
+	}
+	
+	@Override
+	public void actionPerformed(ActionEvent e) {
+		if(e.getSource() == back) {
+			
+			frame.dispose();
+			System.exit(0);
+		}
+		if(e.getSource() == Hydrobutton) {
+			frame.dispose();
+			HydrogenMain hydro = new HydrogenMain();
+		}
+		if(e.getSource() == Pendubutton) {
+			frame.dispose();
+			DoublePendulum pendu = new DoublePendulum();
+		}
+		if(e.getSource() == PLbutton) {
+			frame.dispose();
+			ParticleLifeMain pl = new ParticleLifeMain();
+		}
+		if(e.getSource() == EButton) {
+			frame.dispose();
+			EntropyMain en = new EntropyMain();
+		}
+	}
+	
+	
+	
+	public static void main(String args[]) {
+
+		Main hi = new Main();
+	}
+}
+
+class painty extends JPanel{
+	public painty() {
+		this.setBackground(Color.BLACK);
+		this.setBounds(0, 0, 1600, 300);
+	}
+	@Override
+	public void paintComponent(Graphics g) {
+		super.paintComponent(g);
+		g.setFont(new Font("Serif", Font.BOLD, 100));
+		g.setColor(Color.WHITE);
+		g.drawString("Physics Simulations", 350, 100);
+	}
+}
