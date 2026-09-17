@@ -30,7 +30,7 @@ public class EntropyMain implements ActionListener, ChangeListener{
 	private int numBoxes; //number of boxes, keep it the same for now
 	private int numBoxesToStartWithParticles; //self explanatory
 	private double S; //Entropy of a given system
-	private final double k = 1.380649E10-23; //Joules / Kelvin, not relative units (it doesn't equal 1)
+	private final double k = 1.380649E10-23; //Joules / Kelvin, not relative units (it doesn't equal 1) 
 	
 	private JLabel EntropyAtAPoint, numParts, numBoxesWP;
 	private JButton start, reset; //turn the simulation on/off
@@ -83,7 +83,7 @@ public class EntropyMain implements ActionListener, ChangeListener{
 		pSlider.setPaintTicks(true);
 		pSlider.setPaintLabels(true);
 		sliderpanel.add(pSlider);
-		/*
+		
 		bSlider = new JSlider(1, 15, 5);
 		bSlider.setBackground(Color.BLACK);
 		bSlider.setForeground(Color.WHITE);
@@ -91,7 +91,7 @@ public class EntropyMain implements ActionListener, ChangeListener{
 		bSlider.setPaintTicks(true);
 		bSlider.setPaintLabels(true);
 		bSlider.addChangeListener(this);
-		sliderpanel.add(bSlider);*/
+		//sliderpanel.add(bSlider);
 		
 		PBSlider = new JSlider(1, 225, 1);
 		PBSlider.setBackground(Color.BLACK);
@@ -131,7 +131,7 @@ public class EntropyMain implements ActionListener, ChangeListener{
 		back.setBackground(Color.DARK_GRAY);
 		back.setForeground(Color.WHITE);
 		back.addActionListener(this);
-		back.setBounds(1450, 1, 75, 50);
+		back.setBounds(1, 1, 75, 50);
 		frame.add(border);
 		frame.add(back);
 
@@ -153,8 +153,10 @@ public class EntropyMain implements ActionListener, ChangeListener{
 				
 				while(isRunning) {
 					if(go) {
+						for(int i = 0 ; i <= 8; i++) {
+							step();
+						}
 						step();
-						
 					}
 					else {
 					}
@@ -175,13 +177,17 @@ public class EntropyMain implements ActionListener, ChangeListener{
 	
 	@Override
 	public void stateChanged(ChangeEvent e) {
-		numParticles = (int)Math.round(1 * Math.pow(10000 / 1, pSlider.getValue() / 1000.0));
-		//numBoxes = bSlider.getValue();
+		if(pSlider.getValue() < 1000) {
+		numParticles = (int)Math.round(1 * Math.pow(10000 / 1, pSlider.getValue() / 1000.0));}
+		else {
+			numParticles = pSlider.getValue();
+		}
+		numBoxes = bSlider.getValue();
 		numBoxesToStartWithParticles = PBSlider.getValue();
 		while(isStepping) {
 			
 		}
-		for(int i = 1; i <= numBoxesToStartWithParticles; i++) {
+			for(int i = 1; i <= numBoxesToStartWithParticles; i++) {
 			panels.get(i - 1).particles = numParticles / (numBoxesToStartWithParticles);
 		}
 		for(int i = numBoxesToStartWithParticles; i < numBoxes * numBoxes; i++) {
@@ -190,12 +196,6 @@ public class EntropyMain implements ActionListener, ChangeListener{
 		for(EntropyPanel p : panels) {
 			p.repaint();
 		}
-		/*for(int i = 0; i < numBoxes * numBoxes; i++) {
-			panels.get(i).repaint();
-		}
-		for(int i = numBoxes * numBoxes; i < 225; i++) {
-			
-		}*/
 		Logomega = setOmega(panels);
 		S = setS(Logomega);
 		EntropyAtAPoint.setText("Current Entropy: " + S + " J/K");
@@ -232,11 +232,14 @@ public class EntropyMain implements ActionListener, ChangeListener{
 			while(isStepping) {
 				
 			}
-			for(int i = 1; i <= numBoxesToStartWithParticles; i++) {
-				panels.get(i - 1).particles = numParticles / (numBoxesToStartWithParticles);
-			}
-			for(int i = numBoxesToStartWithParticles; i < numBoxes * numBoxes; i++) {
-				panels.get(i).particles = 0;
+			for(int i = 0; i < panels.size(); i++) {
+				if(i < numBoxesToStartWithParticles) {
+					panels.get(i).particles = numParticles/numBoxesToStartWithParticles;
+					
+				}
+				else {
+					panels.get(i).particles = 0;
+				}
 			}
 			for(EntropyPanel p : panels) {
 				p.repaint();
@@ -251,6 +254,7 @@ public class EntropyMain implements ActionListener, ChangeListener{
 	
 	
 	public void step() {
+		double newk =   k;
 		isStepping = true;
 		Random hi = new Random();
 		boolean betterEntropy = false;
@@ -259,23 +263,23 @@ public class EntropyMain implements ActionListener, ChangeListener{
 		}
 		while(!betterEntropy) {
 			
-			int randIndex = hi.nextInt(numBoxes * numBoxes);
+			int randIndex = hi.nextInt(225);
 			EntropyPanel randTest = panels.get(randIndex);
 			while(randTest.particles <= 0) {
-				randIndex = hi.nextInt(numBoxes * numBoxes);
+				randIndex = hi.nextInt(225);
 				randTest = panels.get(randIndex);
 			}
 			int[] possibleIndexes = {-1, -1, -1, -1};
 			if(randIndex - numBoxes >= 0) {
 				possibleIndexes[0] = randIndex - numBoxes;
 			}
-			if(randIndex - 1 > 0 && (randIndex - 1) % numBoxes != (numBoxes - 1)) {
+			if((randIndex - 1) > 0 && (randIndex - 1) % numBoxes != (numBoxes - 1)) {
 				possibleIndexes[1] = randIndex - 1;
 			}
-			if(randIndex + numBoxes < numBoxes * numBoxes) {
+			if((randIndex + numBoxes) < 225) {
 				possibleIndexes[2] = randIndex + numBoxes;
 			}
-			if(randIndex + 1 < numBoxes * numBoxes && (randIndex + 1) % numBoxes != 0) {
+			if((randIndex + 1) < 225 && (randIndex + 1) % numBoxes != 0) {
 				possibleIndexes[3] = randIndex + 1;
 			}
 			int randIndex2 = hi.nextInt(4);
@@ -286,11 +290,12 @@ public class EntropyMain implements ActionListener, ChangeListener{
 			panels.get(possibleIndexes[randIndex2]).particles ++;
 			double tempS = setS(setOmega(panels));
 			double deltaS = tempS - S;
+			
 			if(deltaS >= 0) { //Originally had a hard cutoff of -1E0-5 * k, but switched it to metropolis probability for smoother sims
 				betterEntropy = true;
 				S = tempS;
 			}
-			else if (Math.random() < Math.exp(deltaS / k)){
+			else if (Math.random() < Math.exp(deltaS / newk)){
 				betterEntropy = true;
 				S = tempS;
 			}
@@ -298,7 +303,7 @@ public class EntropyMain implements ActionListener, ChangeListener{
 				panels.get(possibleIndexes[randIndex2]).particles--;
 				randTest.particles++;
 			} //Uses an entropy driven Metropolis prediction alogrithm to nudge particles towards greater entropy
-			
+
 		}
 		/*for(EntropyPanel p : panels) {
 			p.repaint();
@@ -353,7 +358,6 @@ public class EntropyMain implements ActionListener, ChangeListener{
 		}
 		
 		}
-
 		return p;
 	}
 	
