@@ -1,0 +1,558 @@
+//Please note this is very unfinished and likely not very accurate. Uses Schwarzschild metric to calcuate ONLY the gravitational lensing, not the accretion disk
+
+import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.ArrayList;
+
+public class BlackHoleMain extends JPanel implements ActionListener{
+	
+	
+	private JButton back,reset;
+	
+	
+	
+	private volatile boolean isStepping, isRepainting;
+	private int lastSpawnIndex = 0;
+	private final double pi = Math.PI;
+	private int stepcount = 1;
+	private JFrame frame;
+	private int x, y;
+	private Thread thread;
+	private ArrayList<Ray> rays;
+	private double m;
+	private double r_s;
+	private static final double c = 299792458; //m/s
+	private static final double G = 6.6743E-11; //m^3/(kg * s^2)
+	private static double lTime = System.nanoTime();
+	private double alpha, beta;
+	private int count = 0;
+	private BlackHoleSliders sli;
+	Timer simTime;
+	
+	public BlackHoleMain() {
+		back = new JButton("Exit");
+		back.setBackground(Color.DARK_GRAY);
+		back.setForeground(Color.WHITE);
+		back.addActionListener(this);
+		back.setBounds(1, 1, 75, 50);
+		x = -800;
+		y = -400;
+		
+		m = 6.73E28;
+		r_s = (2 * G * m) / (c * c);
+		alpha = pi/2;
+		beta = 0;
+		isStepping = false;
+		
+		rays = new ArrayList<Ray>(1000);
+		for(int y = -450; y <= 450; y += 15) {
+			for(int x = -900; x <= -600; x+=5) {
+				for(int z = -450; z <= 450; z+= 20) {
+					if(Math.sqrt(x * x + y * y + z * z) <680) {//670
+						
+							rays.add(new Ray(x,y,z));
+						
+					}
+				}
+			}
+		}
+		
+		frame = new JFrame("Black Hole GR Simulation");
+		frame.setSize(1600,1000);
+		frame.setLayout(null);
+		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		frame.setResizable(true);
+		frame.getContentPane().setBackground(Color.BLACK);
+
+		reset = new JButton("Reset Rays");
+		reset.setBounds(50, 500, 200, 100);
+		reset.addActionListener(this);
+		frame.add(reset);
+		
+		sli = new BlackHoleSliders((int)Math.toDegrees(alpha),(int) Math.toDegrees(beta));
+		sli.setBounds(50, 200, 200, 300);
+		frame.add(sli);
+
+		frame.add(back);
+		this.setBackground(Color.BLACK);
+		this.setBounds(250,0,1600,1000);
+		frame.add(this);
+		
+		isRepainting = false;
+		
+		
+		frame.setVisible(true);
+		
+		/*thread = new Thread(new Runnable() {
+			public void run() {
+				Timer simTime = new Timer(16, e ->{
+					int count = 0;
+				//while(true) {
+						step();
+						
+					try {
+					Thread.sleep(5);
+					}
+					catch(InterruptedException ee) {
+						
+					}
+					if(count == 7) {
+						/*for(int y = -300; y <= 300; y += 8) {
+							for(int x = -800; x <= -770; x+= 10) {
+								//for(int z = -450; z <= 450; z+= 8) {
+									spawnRay(x,y,0);
+								//}
+							}
+						}
+						synchronized(rays) {
+						for(int y = -300; y <= 300; y += 15) {
+							for(int x = -900; x <= -600; x+= 5) {
+								for(int z = -350; z <= 350; z+= 20) {
+									if(Math.sqrt(x * x + y * y + z * z) < 670 && y != 0) {
+										rays.add(new Ray(x,y,z));
+										}
+								}
+							}
+						}
+						}
+						count = 0;
+					}
+					else {count++;}
+				});
+				simTime.start();
+					//}
+				
+			}
+		
+		});
+		thread.setDaemon(true);
+		//thread.start();
+		*/
+		simTime = new Timer(1, e ->{ //essentially a while true loop but much better
+		//while(true) {
+			alpha = sli.alpha;
+				step();
+				
+			try {
+			Thread.sleep(5);
+			}
+			catch(InterruptedException ee) {
+				
+			}
+			if(count == 7) {
+				/*for(int y = -300; y <= 300; y += 8) {
+					for(int x = -800; x <= -770; x+= 10) {
+						//for(int z = -450; z <= 450; z+= 8) {
+							spawnRay(x,y,0);
+						//}
+					}
+				}*/
+				//synchronized(rays) {
+				for(int y = -450; y <= 450; y += 15) {
+					for(int x = -900; x <= -600; x+= 5) {
+						for(int z = -450; z <= 450; z+= 20) {
+							if(Math.sqrt(x * x + y * y + z * z) < 680 && y !=0) {//670
+								rays.add(new Ray(x,y,z));
+								}
+						}
+					}
+				}
+				//}
+				count = 0;
+			}
+			else {count++;}
+		});
+		simTime.start();
+	}
+
+	@Override
+	public void actionPerformed(ActionEvent e) {
+		if(e.getSource() == back) {
+			simTime.stop();
+			frame.dispose();
+			Main hi = new Main();
+		}
+		if(e.getSource() == reset) {
+			while(isStepping) {
+				
+			}
+			for(int i = rays.size() - 1; i >= 0; i--) {
+				rays.remove(i);
+			}
+			for(int y = -450; y <= 450; y += 15) {
+				for(int x = -900; x <= -600; x+=5) {
+					for(int z = -450; z <= 450; z+= 20) {
+						if(Math.sqrt(x * x + y * y + z * z) < 680) {//670
+							
+								rays.add(new Ray(x,y,z));
+							
+						}
+					}
+				}
+			}
+		}
+	}
+	
+	public void spawnRay(int newx, int newy, int newz) {
+		for(int i = 0; i < rays.size(); i++) {
+			int index = (lastSpawnIndex + i) % rays.size();
+			Ray r = rays.get(index);
+			if(!r.isAlive) {
+				lastSpawnIndex = index;
+				r.z = newz;
+				r.x = newx;
+				r.y = newy;
+				r.r = Math.sqrt(r.x * r.x + r.y * r.y + r.z * r.z);
+				r.phi = Math.atan2(r.y, r.x);
+				r.dr = (r.x * 10000 + r.y * 0) / r.r;
+				r.dphi = (r.x * 0 - r.y * 10000) / (r.r * r.r);
+				r.isAlive = true;
+				return;
+			}
+		}
+		rays.add(new Ray(newx, newy, newz));
+	}
+	
+	public double dphi2(double r,double dr, double dphi, double theta, double dtheta) {
+		return -2 / r * dr * dphi - 2 * (Math.cos(theta) / Math.sin(theta)) * dphi * dtheta;
+	}
+	
+	public double dr2(double r, double dr, double phi, double dphi, double theta, double dtheta) {
+		//return -(r_s / (2 * r * r)) * (E * E) + (r_s)/(2 * r * r * (1 - r_s/r)) * (dr * dr) + (r - r_s)*(dphi * dphi);
+		//return r_s/(2 * r * (r - r_s))*(dr*dr) + (r - 1.5 * r_s) * ((dtheta * dtheta) + Math.sin(theta) * Math.sin(theta) * (dphi * dphi));
+		double M = (G * m) / (c * c);
+		return -M / (r * r) * dr * dr + (r - 3 * M)*(dtheta * dtheta + (Math.sin(theta) * Math.sin(theta)) * dphi * dphi);
+	}
+	
+	public double dtheta2(double r, double dr, double dphi, double theta, double dtheta) {
+		return -2 / r * dr * dtheta + Math.sin(theta) * Math.cos(theta) * (dphi * dphi);
+	}
+	
+	public void step() {
+		isStepping = true;
+		beta = sli.beta;
+		for(int i = rays.size() - 1; i >= 0; i--) {
+			Ray r = rays.get(i);
+			if(r.isAlive && r.r > 1.2* r_s ){//&& r.x < 8000 && r.x > -800 && r.y < 8000 && r.y > -600
+				double t = 0.0005;
+				double rho = r.r;
+				double phi = r.phi;
+				double dr = r.dr;
+				double dphi = r.dphi;
+				double theta = r.theta;
+				double dtheta = r.dtheta;
+				t *= (1 - r_s / r.r);
+				
+				
+				double k1r = dr;
+				double k1dr = dr2(rho, dr, phi, dphi, theta, dtheta);
+				double k1phi = dphi;
+				double k1dphi = dphi2(rho, dr, dphi, theta, dtheta);
+				double k1theta = dtheta;
+				double k1dtheta = dtheta2(rho, dr, dphi, theta, dtheta);
+				
+				double k2r = dr + t * .5 * k1r;
+				double k2dr = dr2(rho + t * .5 * k1r, dr + t * .5 * k1dr, phi + t * .5 * k1phi, dphi + t * .5 * k1dphi, theta + t * .5 * k1theta, dtheta + t * .5 * k1dtheta);
+				double k2phi = dphi + t * .5 * k1phi;
+				double k2dphi = dphi2(rho + t * .5 * k1r, dr + t * .5 * k1dr, dphi + t * .5 * k1dphi, theta + t * .5 * k1theta, dtheta +t * .5 * k1dtheta);
+				double k2theta = dtheta + t * .5 * k1theta;
+				double k2dtheta = dtheta2(rho + t * .5 * k1r, dr + t * .5 * k1dr, dphi + t * .5 * k1dphi, theta + t * .5 * k1theta, dtheta +t * .5 * k1dtheta);
+				
+				double k3r = dr + t * .5 * k2r;
+				double k3dr = dr2(rho + t * .5 * k2r, dr + t * .5 * k2dr, phi + t * .5 * k2phi, dphi + t * .5 * k2dphi, theta + t * .5 * k2theta, dtheta +t * .5 * k2dtheta);
+				double k3phi = dphi + t * .5 * k2phi;
+				double k3dphi = dphi2(rho + t * .5 * k2r, dr + t * .5 * k2dr, dphi + t * .5 * k2dphi, theta + t * .5 * k2theta, dtheta +t * .5 * k2dtheta);
+				double k3theta = dtheta + t * .5 * k2theta;
+				double k3dtheta = dtheta2(rho + t * .5 * k2r, dr + t * .5 * k2dr, dphi + t * .5 * k2dphi, theta + t * .5 * k2theta, dtheta +t * .5 * k2dtheta);
+				
+				double k4r = dr + t* k3r;
+				double k4dr = dr2(rho + t * k3r, dr + t * k3dr, phi + t * k3phi, dphi + t * k3dphi, theta + t  * k3theta, dtheta +t* k3dtheta);
+				double k4phi = dphi + t * k3phi;
+				double k4dphi = dphi2(rho + t * k3r, dr + t * k3dr, dphi + t * k3dphi, theta + t * k3theta, dtheta +t * k3dtheta);
+				double k4theta = dtheta + t * k3theta;
+				double k4dtheta = dtheta2(rho + t * k3r, dr + t * k3dr, dphi + t * k3dphi, theta + t * k3theta, dtheta +t * k3dtheta);
+				
+				rho = rho + (t / 6)*(k1r + 2 * k2r + 2 * k3r + k4r);
+				dr = dr + (t / 6) * (k1dr + 2 * k2dr + 2 * k3dr + k4dr);
+				phi = phi + (t / 6) * (k1phi + 2 * k2phi + k3phi + k4phi);
+				dphi = dphi + (t / 6) * (k1dphi + 2 * k2dphi + 2 * k3dphi + k4dphi);
+				theta = theta + (t / 6) * (k1theta + 2 * k2theta + 2 * k3theta + k4theta);
+				dtheta = dtheta + (t / 6) * (k1dtheta + 2 * k2dtheta + 2 * k3dtheta + k4dtheta);
+				
+				r.r = rho;
+				r.dr = dr;
+				r.phi = phi;
+				r.dphi = dphi;
+				r.theta = theta;
+				r.dtheta = dtheta;
+				r.x = (int)Math.round(rho * Math.sin(theta) * Math.cos(phi));
+				r.y = (int)Math.round(rho * Math.sin(theta) * Math.sin(phi));// / Math.cos(3 * pi / 2 + 1)
+				r.z = (int)Math.round(rho * Math.cos(theta));
+				
+				
+				/*
+				 * Time for some RK4
+				 */
+			}
+			else {
+				r.color = Color.BLACK;
+				r.isAlive = false;
+				continue;
+				//rays.remove(r);
+			}
+		}
+		this.repaint();
+		for(int i = rays.size() - 1; i >= 0; i--) {
+			if(rays.get(i).x > 100) {
+				rays.remove(i);
+			}
+		
+		}
+		isStepping = false;
+	}
+	
+	
+	@Override
+	public void paintComponent(Graphics g) {
+		isRepainting = true;
+		super.paintComponent(g);
+		Graphics2D g2d = (Graphics2D)g;
+		synchronized(rays) {
+		double d = 0;
+		
+		for(Ray r : rays) {
+			
+			g2d.setColor(new Color(0xdb7b35));
+			if(r.r < 150) {
+				g2d.setColor(Color.BLACK);
+			}
+			/*else if(r.r < 160) {
+				g2d.setColor(Color.getHSBColor(0.0f, 0.9f, 0.4f));
+			}
+			else if(r.r < 190) {
+				g2d.setColor(Color.getHSBColor(0.0f, 0.8f, 0.6f));
+			}
+			/*double depth = r.z + 400;
+			if(depth <= 0.1)
+				depth = 0.1;
+			int x = (int)((r.x * 300) / ((depth)));
+			int y = (int)((r.y * 300) / (depth));*/
+			double betacos = Math.cos(beta);
+			double betasin = Math.sin(beta);
+			double anglecos = Math.cos(alpha);//1.5
+			double anglesin = Math.sin(alpha);//1.5
+			
+			double x1 = r.x;
+			double y1 = r.y * betacos - r.z * betasin;
+			double z1 = r.y * betasin + r.z * betacos;
+		
+			double xprime = (x1 * anglecos +z1 * anglesin);
+			double yprime = y1;
+			double zprime = (-x1 * anglesin + z1 * anglecos);
+	
+			double scale = 300.0 / (zprime + 600.0 );
+			xprime *= scale;
+			
+			yprime *= -scale;
+			if(r.isAlive && r.r > 1.5 * r_s  && ((r.x < 100 && r.x > -300))){ //maybe make it -70 so that the whole hole is shown
+			//if(r.isAlive && r.x < 50 && r.x > -50) {
+				
+				g2d.fillRect((int)xprime + 800, (int)yprime + 400, 2 , 2); //for now this only uses 1 ray. in the future i will make an array list of multiple rays
+			}
+			else {}
+			
+			
+		}
+		for(Ray r : rays) {
+			g2d.setColor(new Color(0xdb7b35));
+			if(r.r < 150) {
+				g2d.setColor(Color.BLACK);
+			}
+			/*else if(r.r < 160) {
+				g2d.setColor(Color.getHSBColor(0.0f, 0.9f, 0.4f));
+			}
+			else if(r.r < 190) {
+				g2d.setColor(Color.getHSBColor(0.0f, 0.8f, 0.6f));
+			}
+			/*double depth = r.z + 400;
+			if(depth <= 0.1)
+				depth = 0.1;
+			int x = (int)((r.x * 300) / ((depth)));
+			int y = (int)((r.y * 300) / (depth));*/
+			double betacos = Math.cos(beta);
+			double betasin = Math.sin(beta);
+			double anglecos = Math.cos(alpha);//1.5
+			double anglesin = Math.sin(alpha);//1.5
+			
+			double x1 = r.x;
+			double y1 = r.y * betacos - r.z * betasin;
+			double z1 = r.y * betasin + r.z * betacos;
+		
+			double xprime = (x1 * anglecos +z1 * anglesin);
+			double yprime = y1;
+			double zprime = (-x1 * anglesin + z1 * anglecos);
+	
+			double scale = 300.0 / (zprime + 600.0 );
+			xprime *= scale;
+			
+			yprime *= -scale;
+			if(r.isAlive && ((r.x<2 && r.x > -2))){ //maybe make it -70 so that the whole hole is shown
+			//if(r.isAlive && r.x < 50 && r.x > -50) {
+				g2d.fillRect((int)xprime +300, (int)yprime + 400, 2 , 2); //for now this only uses 1 ray. in the future i will make an array list of multiple rays
+			}
+			else {}
+			
+			
+			
+		}
+		g2d.setColor(Color.WHITE);
+		for(int y = 0; y <= 1000;y++) {
+			g2d.drawRect(500, y, 1,1);
+			g2d.drawRect(50, y, 1, 1);
+		}
+		}
+		for(int y = -450; y <= 450; y += 15) {
+			for(int x = -200; x <= 200; x+= 5) {
+				for(int z = -350; z <= 350; z+= 20) {
+					if(Math.sqrt(x * x + y * y + z * z) < 1.35*r_s) {
+						double betacos = Math.cos(beta);
+						double betasin = Math.sin(beta);
+						double anglecos = Math.cos(alpha);//1.5
+						double anglesin = Math.sin(alpha);//1.5
+						
+						double x1 = x;
+						double y1 = y * betacos - z * betasin;
+						double z1 = y * betasin + z * betacos;
+					
+						double xprime = (x1 * anglecos +z1 * anglesin);
+						double yprime = y1;
+						double zprime = (-x1 * anglesin + z1 * anglecos);
+				
+						double scale = 300.0 / (zprime + 600.0 );
+						xprime *= scale;
+						
+						yprime *= -scale;
+						g2d.setColor(Color.BLACK);
+						g2d.fillRect((int)xprime + 795,(int)yprime + 395,10,10);
+						}
+				}
+			}
+		}
+
+		for(Ray r : rays) {
+			if((r.x < -150 && alpha > pi) || (r.z > 100 && Math.toDegrees(alpha) > 105 && alpha < 3 * pi/2) || (((alpha >= 0 && Math.toDegrees(alpha) < 75) || (alpha > 3 * pi /2)) && r.z < -100)) {
+				g2d.setColor(new Color(0xdb7b35));
+				double betacos = Math.cos(beta);
+				double betasin = Math.sin(beta);
+				double anglecos = Math.cos(alpha);//1.5
+				double anglesin = Math.sin(alpha);//1.5
+				
+				double x1 = r.x;
+				double y1 = r.y * betacos - r.z * betasin;
+				double z1 = r.y * betasin + r.z * betacos;
+			
+				double xprime = (x1 * anglecos +z1 * anglesin);
+				double yprime = y1;
+				double zprime = (-x1 * anglesin + z1 * anglecos);
+		
+				double scale = 300.0 / (zprime + 600.0 );
+				xprime *= scale;
+				
+				yprime *= -scale;
+				if(r.isAlive && ((r.x < 200 && r.x > -200))){ //maybe make it -70 so that the whole hole is shown
+				//if(r.isAlive && r.x < 50 && r.x > -50) {
+					
+					g2d.fillRect((int)xprime + 800, (int)yprime + 400, 2 , 2); //for now this only uses 1 ray. in the future i will make an array list of multiple rays
+				}
+				else{if(r.x > 200)
+						r.isAlive = false;}
+			}
+		}
+		isRepainting = false;
+	}
+	
+	public static void main(String args[]) {
+		BlackHoleMain hi = new BlackHoleMain();
+	}
+}
+class Ray extends JPanel{
+	public int x;
+	public int y, z;
+	public double r;
+	public double phi, theta;
+	public double dr;
+	public double dphi, dtheta;
+	public volatile boolean isAlive;
+	public Color color;
+	
+	public Ray(int xx, int yy, int zz) {
+		z = zz;
+		x = xx;
+		y = yy;
+		r = Math.sqrt(xx * xx + yy * yy + zz * zz);
+		phi = Math.atan2(yy, xx);
+		theta = Math.acos(z / r);
+		dr = (x * 10000 + y * 0) / r;
+		dphi = (- y * 10000) / (x*x + y*y);//(x * 0 - y * 10000) / (r * r) or -(y * 10000) / (x * x + y * y) or (y * 10000) / ((r * r) * (Math.sin(theta) * Math.sin(theta)))
+		dtheta = ((x * 10000) * z ) / (r * r * Math.hypot(x,y));//((x * 10000) * z) / (r * r * Math.hypot(x,y)) or (-z * dr) / ((r * r) * (Math.sin(theta) * Math.sin(theta)))
+		isAlive = true;
+		color = Color.yellow;
+	}
+}
+
+
+class BlackHoleSliders extends JPanel implements ChangeListener{
+	public double alpha, beta;
+	private JSlider alphas, betas;
+	private JLabel alphal,betal;
+	public BlackHoleSliders(int initialA, int initialB) {
+		alphal = new JLabel("β = " + initialA + "\u00B0");
+		alphal.setForeground(Color.WHITE);
+		alphal.setBounds(0, 600, 200, 100);
+		this.add(alphal);
+		
+		betal = new JLabel("β = " + initialB + "\u00B0");
+		betal.setForeground(Color.WHITE);
+		betal.setBounds(0, 600, 200, 100);
+		betas = new JSlider(0, 179, initialB);
+		betas.setBackground(Color.BLACK);
+		betas.setForeground(Color.WHITE);
+		betas.addChangeListener(this);
+		betas.setMajorTickSpacing(90);
+		betas.setPaintTicks(true);
+		betas.setPaintLabels(true);
+		betas.addChangeListener(this);
+		
+		alphas = new JSlider(0, 360, initialA);
+		alphas.setBackground(Color.BLACK);
+		alphas.setForeground(Color.WHITE);
+		alphas.addChangeListener(this);
+		alphas.setMajorTickSpacing(90);
+		alphas.setPaintTicks(true);
+		alphas.setPaintLabels(true);
+		alphas.addChangeListener(this);
+		alpha = Math.toRadians(initialA);
+		beta = Math.toRadians(initialB);
+		alphas.setBounds(0,300,250,300);
+		this.setBackground(Color.BLACK);
+		this.add(alphas);
+		JLabel space = new JLabel(" ");
+		space.setBackground(Color.BLACK);
+		this.add(space);
+		//this.add(betas);
+
+		//this.add(betal);
+	}
+	@Override
+	public void stateChanged(ChangeEvent e) {
+		alpha = Math.toRadians(alphas.getValue());
+		alphal.setText("β = " + alphas.getValue() + "\u00B0");
+		beta = Math.toRadians(betas.getValue());
+		betal.setText("β = " + betas.getValue() + "\u00B0");
+	}
+}
