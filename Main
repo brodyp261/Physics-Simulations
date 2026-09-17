@@ -1,15 +1,35 @@
 import javax.swing.*;
 
+
+/*Ideas- It is currently the first day of school so now I'm entering crunch mode. I am approximately 4 projects and a laptop ahead of schedule so lets think about things that I can make:
+ * Pulsar - GR and E & M
+ * Keplar Planetary Motion- Basic Newtonian Mechanics, maybe dont do js because it is kinda basic
+ * Black hole but spawning individual light rays so it doesn't kill the laptop
+ * quantum tunneling- idk how im gonna do it but i could
+ * standard model playground- speak of idk how im gonna do it
+ * Maybe another stat mech thing?
+ * MORE QUANTUM
+ * Galaxy thing
+ * Nuclear Reactor
+ * Chemical Reactions Playground
+ * fluids
+ * ideal gas law, couple it w/ entropy
+ * Lattice QCD basic
+ * Saxophone note detector
+ * 
+ * Thats a lot of things. Just because I can tho doesn't mean I should. Im only gonna do one if I truly wanna do it bc at the end of the day this is for FUN
+ */
+
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.*;
 public class Main implements ActionListener{
 	
-	private JButton Hydrobutton, Pendubutton, PLbutton, EButton;
+	private JButton Hydrobutton, Pendubutton, PLbutton, EButton, BHButton;
 	private JPanel hi;
 	private JFrame frame;
 	private painty paint;
-	private JLabel HydroDesc, PenduDesc, PLDesc, EDesc;
+	private JLabel HydroDesc, PenduDesc, PLDesc, EDesc, BHDesc;
 	private JButton back;
 	
 	public Main() {
@@ -44,6 +64,21 @@ public class Main implements ActionListener{
 		EDesc.setBounds(910, 460, 340, 170);
 		EDesc.setFont(new Font("Serif", Font.ITALIC, 10));
 		hi.add(EDesc);
+		
+		BHDesc = new JLabel("<html>Uses RK4 to calculate the null geodesic for individual light rays around a dormant black hole, rendering gravitational lensing around the black hole");
+		BHDesc.setForeground(Color.WHITE);
+		BHDesc.setBounds(610, 660, 340, 170);
+		BHDesc.setFont(new Font("Serif", Font.ITALIC, 10));
+		hi.add(BHDesc);
+		
+		BHButton = new JButton("Black Hole Raymarcher");
+		BHButton.setBackground(Color.DARK_GRAY);
+		BHButton.setForeground(Color.WHITE);
+		BHButton.setFocusPainted(false);
+		BHButton.setFont(new Font("Serif", Font.PLAIN, 20));
+		BHButton.setBounds(600, 650, 350, 75);
+		BHButton.addActionListener(this);
+		hi.add(BHButton);
 		
 		EButton = new JButton("Entropy Visualizer");
 		EButton.setBackground(Color.DARK_GRAY);
@@ -121,6 +156,10 @@ public class Main implements ActionListener{
 		if(e.getSource() == EButton) {
 			frame.dispose();
 			EntropyMain en = new EntropyMain();
+		}
+		if(e.getSource() == BHButton) {
+			frame.dispose();
+			BlackHoleMain bh = new BlackHoleMain();
 		}
 	}
 	
