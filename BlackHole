@@ -1,5 +1,3 @@
-//Please note this is very unfinished and likely not very accurate. Uses Schwarzschild metric to calcuate ONLY the gravitational lensing, not the accretion disk
-
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -9,6 +7,19 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 
+/*THE PLAN:
+ * Make light ray move
+ * when light ray hit black hole r_s, make light ray die
+ * solve null geodesic for black hole
+ * use rk4 for step function
+ * use 2d polar cords for now. 
+ * implements pitch and yaw formulas?
+ * RAY TRACER
+ */
+
+/*Next:
+ * Add it so you can delete everything and respawn all the rays
+ */
 public class BlackHoleMain extends JPanel implements ActionListener{
 	
 	
@@ -50,18 +61,16 @@ public class BlackHoleMain extends JPanel implements ActionListener{
 		isStepping = false;
 		
 		rays = new ArrayList<Ray>(1000);
-		for(int y = -450; y <= 450; y += 15) {
-			for(int x = -900; x <= -600; x+=5) {
-				for(int z = -450; z <= 450; z+= 20) {
-					if(Math.sqrt(x * x + y * y + z * z) <680) {//670
-						
-							rays.add(new Ray(x,y,z));
-						
-					}
+		for(int y = -300; y <= 300; y += 15) {
+			for(int x = -900; x <= -600; x+= 5) {
+				for(int z = -300; z <= 300; z+= 20) {
+					if(Math.sqrt(x * x + y * y + z * z) < 650 && y !=0) {//670
+						if(Math.sqrt(x * x + y* y + z* z) > 110) 
+						rays.add(new Ray(x,y,z));
+						}
 				}
 			}
 		}
-		
 		frame = new JFrame("Black Hole GR Simulation");
 		frame.setSize(1600,1000);
 		frame.setLayout(null);
@@ -144,7 +153,7 @@ public class BlackHoleMain extends JPanel implements ActionListener{
 			catch(InterruptedException ee) {
 				
 			}
-			if(count == 7) {
+			if(count == 1) {
 				/*for(int y = -300; y <= 300; y += 8) {
 					for(int x = -800; x <= -770; x+= 10) {
 						//for(int z = -450; z <= 450; z+= 8) {
@@ -153,10 +162,11 @@ public class BlackHoleMain extends JPanel implements ActionListener{
 					}
 				}*/
 				//synchronized(rays) {
-				for(int y = -450; y <= 450; y += 15) {
+				for(int y = -300; y <= 300; y += 15) {
 					for(int x = -900; x <= -600; x+= 5) {
-						for(int z = -450; z <= 450; z+= 20) {
-							if(Math.sqrt(x * x + y * y + z * z) < 680 && y !=0) {//670
+						for(int z = -300; z <= 300; z+= 20) {
+							if(Math.sqrt(x * x + y * y + z * z) < 650 && y !=0) {//670
+								if(Math.sqrt(x * x + y* y + z* z) > 110) 
 								rays.add(new Ray(x,y,z));
 								}
 						}
@@ -184,14 +194,13 @@ public class BlackHoleMain extends JPanel implements ActionListener{
 			for(int i = rays.size() - 1; i >= 0; i--) {
 				rays.remove(i);
 			}
-			for(int y = -450; y <= 450; y += 15) {
-				for(int x = -900; x <= -600; x+=5) {
-					for(int z = -450; z <= 450; z+= 20) {
-						if(Math.sqrt(x * x + y * y + z * z) < 680) {//670
-							
-								rays.add(new Ray(x,y,z));
-							
-						}
+			for(int y = -300; y <= 300; y += 15) {
+				for(int x = -900; x <= -600; x+= 5) {
+					for(int z = -300; z <= 300; z+= 20) {
+						if(Math.sqrt(x * x + y * y + z * z) < 650 && y !=0) {//670
+							if(Math.sqrt(x * x + y* y + z* z) > 110) 
+							rays.add(new Ray(x,y,z));
+							}
 					}
 				}
 			}
@@ -218,15 +227,20 @@ public class BlackHoleMain extends JPanel implements ActionListener{
 		rays.add(new Ray(newx, newy, newz));
 	}
 	
+	public double dt2(double r, double dr, double dt) {
+		return r_s / (1 * r * (r - r_s)) * dt * dr;
+	}
+	
 	public double dphi2(double r,double dr, double dphi, double theta, double dtheta) {
 		return -2 / r * dr * dphi - 2 * (Math.cos(theta) / Math.sin(theta)) * dphi * dtheta;
 	}
 	
-	public double dr2(double r, double dr, double phi, double dphi, double theta, double dtheta) {
-		//return -(r_s / (2 * r * r)) * (E * E) + (r_s)/(2 * r * r * (1 - r_s/r)) * (dr * dr) + (r - r_s)*(dphi * dphi);
-		//return r_s/(2 * r * (r - r_s))*(dr*dr) + (r - 1.5 * r_s) * ((dtheta * dtheta) + Math.sin(theta) * Math.sin(theta) * (dphi * dphi));
+	public double dr2(double r, double dr, double phi, double dphi, double theta, double dtheta, double dt) {
+		//DO NOT INCLUDE THISreturn -(r_s / (2 * r * r)) * (E * E) + (r_s)/(2 * r * r * (1 - r_s/r)) * (dr * dr) + (r - r_s)*(dphi * dphi);
+		//DO NOT INCLUDE THISreturn r_s/(2 * r * (r - r_s))*(dr*dr) + (r - 1.5 * r_s) * ((dtheta * dtheta) + Math.sin(theta) * Math.sin(theta) * (dphi * dphi));
 		double M = (G * m) / (c * c);
-		return -M / (r * r) * dr * dr + (r - 3 * M)*(dtheta * dtheta + (Math.sin(theta) * Math.sin(theta)) * dphi * dphi);
+		//return -M / (r * r) * dr * dr + (r - 3 * M)*(dtheta * dtheta + (Math.sin(theta) * Math.sin(theta)) * dphi * dphi);
+		return -(r_s * (r - r_s)) / (2 * r * r * r * r) * (dt * dt) + (r_s) / (2 * r *(r - r_s)) + (Math.sin(theta) * Math.sin(theta)) * (r - r_s)* (dphi * dphi) + (r - r_s) * (dtheta * dtheta);
 	}
 	
 	public double dtheta2(double r, double dr, double dphi, double theta, double dtheta) {
@@ -237,52 +251,66 @@ public class BlackHoleMain extends JPanel implements ActionListener{
 		isStepping = true;
 		beta = sli.beta;
 		for(int i = rays.size() - 1; i >= 0; i--) {
+			
 			Ray r = rays.get(i);
-			if(r.isAlive && r.r > 1.2* r_s ){//&& r.x < 8000 && r.x > -800 && r.y < 8000 && r.y > -600
-				double t = 0.0005;
+			if(r.isAlive && r.r > 1.2* r_s){//&& r.x < 8000 && r.x > -800 && r.y < 8000 && r.y > -600
+				//System.out.println(r.x);
+				double h = 0.0008;
 				double rho = r.r;
 				double phi = r.phi;
 				double dr = r.dr;
 				double dphi = r.dphi;
 				double theta = r.theta;
 				double dtheta = r.dtheta;
-				t *= (1 - r_s / r.r);
+				double dt = r.dt;
+				//double t = r.t;
+				h *= Math.min(1, (rho/r_s) * (rho/r_s));
 				
 				
 				double k1r = dr;
-				double k1dr = dr2(rho, dr, phi, dphi, theta, dtheta);
+				double k1dr = dr2(rho, dr, phi, dphi, theta, dtheta, dt);
 				double k1phi = dphi;
 				double k1dphi = dphi2(rho, dr, dphi, theta, dtheta);
 				double k1theta = dtheta;
 				double k1dtheta = dtheta2(rho, dr, dphi, theta, dtheta);
+				//double k1t = dt;
+				double k1dt = dt2(rho, dr, dt);
 				
-				double k2r = dr + t * .5 * k1r;
-				double k2dr = dr2(rho + t * .5 * k1r, dr + t * .5 * k1dr, phi + t * .5 * k1phi, dphi + t * .5 * k1dphi, theta + t * .5 * k1theta, dtheta + t * .5 * k1dtheta);
-				double k2phi = dphi + t * .5 * k1phi;
-				double k2dphi = dphi2(rho + t * .5 * k1r, dr + t * .5 * k1dr, dphi + t * .5 * k1dphi, theta + t * .5 * k1theta, dtheta +t * .5 * k1dtheta);
-				double k2theta = dtheta + t * .5 * k1theta;
-				double k2dtheta = dtheta2(rho + t * .5 * k1r, dr + t * .5 * k1dr, dphi + t * .5 * k1dphi, theta + t * .5 * k1theta, dtheta +t * .5 * k1dtheta);
+				double k2r = dr + h * .5 * k1r;
+				double k2dr = dr2(rho + h * .5 * k1r, dr + h * .5 * k1dr, phi + h * .5 * k1phi, dphi + h * .5 * k1dphi, theta + h * .5 * k1theta, dtheta + h * .5 * k1dtheta, dt + h * .5 * k1dt);
+				double k2phi = dphi + h * .5 * k1phi;
+				double k2dphi = dphi2(rho + h * .5 * k1r, dr + h * .5 * k1dr, dphi + h * .5 * k1dphi, theta + h * .5 * k1theta, dtheta +h * .5 * k1dtheta);
+				double k2theta = dtheta + h * .5 * k1theta;
+				double k2dtheta = dtheta2(rho + h * .5 * k1r, dr + h * .5 * k1dr, dphi + h * .5 * k1dphi, theta + h * .5 * k1theta, dtheta +h * .5 * k1dtheta);
+				//double k2t = dt + h * .5 * k1t;
+				double k2dt =1;
 				
-				double k3r = dr + t * .5 * k2r;
-				double k3dr = dr2(rho + t * .5 * k2r, dr + t * .5 * k2dr, phi + t * .5 * k2phi, dphi + t * .5 * k2dphi, theta + t * .5 * k2theta, dtheta +t * .5 * k2dtheta);
-				double k3phi = dphi + t * .5 * k2phi;
-				double k3dphi = dphi2(rho + t * .5 * k2r, dr + t * .5 * k2dr, dphi + t * .5 * k2dphi, theta + t * .5 * k2theta, dtheta +t * .5 * k2dtheta);
-				double k3theta = dtheta + t * .5 * k2theta;
-				double k3dtheta = dtheta2(rho + t * .5 * k2r, dr + t * .5 * k2dr, dphi + t * .5 * k2dphi, theta + t * .5 * k2theta, dtheta +t * .5 * k2dtheta);
+				double k3r = dr + h * .5 * k2r;
+				double k3dr = dr2(rho + h * .5 * k2r, dr + h * .5 * k2dr, phi + h * .5 * k2phi, dphi + h * .5 * k2dphi, theta + h * .5 * k2theta, dtheta +h * .5 * k2dtheta, dt + h * .5 * k2dt);
+				double k3phi = dphi + h * .5 * k2phi;
+				double k3dphi = dphi2(rho + h * .5 * k2r, dr + h * .5 * k2dr, dphi + h * .5 * k2dphi, theta + h * .5 * k2theta, dtheta +h * .5 * k2dtheta);
+				double k3theta = dtheta + h * .5 * k2theta;
+				double k3dtheta = dtheta2(rho + h * .5 * k2r, dr + h * .5 * k2dr, dphi + h * .5 * k2dphi, theta + h * .5 * k2theta, dtheta +h * .5 * k2dtheta);
+				//double k3t = dt + h * .5 * k2t;
+				double k3dt = 1;
 				
-				double k4r = dr + t* k3r;
-				double k4dr = dr2(rho + t * k3r, dr + t * k3dr, phi + t * k3phi, dphi + t * k3dphi, theta + t  * k3theta, dtheta +t* k3dtheta);
-				double k4phi = dphi + t * k3phi;
-				double k4dphi = dphi2(rho + t * k3r, dr + t * k3dr, dphi + t * k3dphi, theta + t * k3theta, dtheta +t * k3dtheta);
-				double k4theta = dtheta + t * k3theta;
-				double k4dtheta = dtheta2(rho + t * k3r, dr + t * k3dr, dphi + t * k3dphi, theta + t * k3theta, dtheta +t * k3dtheta);
+				double k4r = dr + h* k3r;
+				double k4dr = dr2(rho + h * k3r, dr + h * k3dr, phi + h * k3phi, dphi + h * k3dphi, theta + h  * k3theta, dtheta +h* k3dtheta, dt + h * k3dt);
+				double k4phi = dphi + h * k3phi;
+				double k4dphi = dphi2(rho + h * k3r, dr + h * k3dr, dphi + h * k3dphi, theta + h * k3theta, dtheta +h * k3dtheta);
+				double k4theta = dtheta + h * k3theta;
+				double k4dtheta = dtheta2(rho + h * k3r, dr + h * k3dr, dphi + h * k3dphi, theta + h * k3theta, dtheta +h * k3dtheta);
+			//	double k4t = dt + h * k3t;
+			//	double k4dt = dt2(rho + h * k3r, dr + h * k3dr, dt + h * k3dr);
 				
-				rho = rho + (t / 6)*(k1r + 2 * k2r + 2 * k3r + k4r);
-				dr = dr + (t / 6) * (k1dr + 2 * k2dr + 2 * k3dr + k4dr);
-				phi = phi + (t / 6) * (k1phi + 2 * k2phi + k3phi + k4phi);
-				dphi = dphi + (t / 6) * (k1dphi + 2 * k2dphi + 2 * k3dphi + k4dphi);
-				theta = theta + (t / 6) * (k1theta + 2 * k2theta + 2 * k3theta + k4theta);
-				dtheta = dtheta + (t / 6) * (k1dtheta + 2 * k2dtheta + 2 * k3dtheta + k4dtheta);
+				rho = rho + (h / 6)*(k1r + 2 * k2r + 2 * k3r + k4r);
+				dr = dr + (h / 6) * (k1dr + 2 * k2dr + 2 * k3dr + k4dr);
+				phi = phi + (h / 6) * (k1phi + 2 * k2phi + k3phi + k4phi);
+				dphi = dphi + (h / 6) * (k1dphi + 2 * k2dphi + 2 * k3dphi + k4dphi);
+				theta = theta + (h / 6) * (k1theta + 2 * k2theta + 2 * k3theta + k4theta);
+				dtheta = dtheta + (h / 6) * (k1dtheta + 2 * k2dtheta + 2 * k3dtheta + k4dtheta);
+				//t = t + (h / 6)*(k1t + 2 * k2t + 2 * k3t + k4t);
+				//dt = dt + (h / 6) * (k1dt + 2 * k2dt + 2 * k3dt + k4dt);
 				
 				r.r = rho;
 				r.dr = dr;
@@ -290,14 +318,18 @@ public class BlackHoleMain extends JPanel implements ActionListener{
 				r.dphi = dphi;
 				r.theta = theta;
 				r.dtheta = dtheta;
+				//r.t = t;
+				r.dt = dt;
 				r.x = (int)Math.round(rho * Math.sin(theta) * Math.cos(phi));
 				r.y = (int)Math.round(rho * Math.sin(theta) * Math.sin(phi));// / Math.cos(3 * pi / 2 + 1)
 				r.z = (int)Math.round(rho * Math.cos(theta));
 				
-				
 				/*
 				 * Time for some RK4
 				 */
+
+				//System.out.println(r.x);
+				//break;
 			}
 			else {
 				r.color = Color.BLACK;
@@ -308,11 +340,16 @@ public class BlackHoleMain extends JPanel implements ActionListener{
 		}
 		this.repaint();
 		for(int i = rays.size() - 1; i >= 0; i--) {
-			if(rays.get(i).x > 100) {
+			Ray r = rays.get(i);
+			if(rays.get(i).x > 110) { //310 for the full light ray
+				rays.get(i).isAlive = false;
+			}
+			if(rays.get(i).x > 550 || !rays.get(i).isAlive || r.z > 300 || r.z < -300 || r.y > 300 || r.y < -300) {
 				rays.remove(i);
 			}
 		
 		}
+		
 		isStepping = false;
 	}
 	
@@ -359,7 +396,7 @@ public class BlackHoleMain extends JPanel implements ActionListener{
 			xprime *= scale;
 			
 			yprime *= -scale;
-			if(r.isAlive && r.r > 1.5 * r_s  && ((r.x < 100 && r.x > -300))){ //maybe make it -70 so that the whole hole is shown
+			if(r.isAlive && r.r > 1.5 * r_s  && ((r.x < 500 && r.x > -300 && r.y < 400 && r.y > -400 && r.z < 500 && r.z > -500))){ //maybe make it -70 so that the whole hole is shown
 			//if(r.isAlive && r.x < 50 && r.x > -50) {
 				
 				g2d.fillRect((int)xprime + 800, (int)yprime + 400, 2 , 2); //for now this only uses 1 ray. in the future i will make an array list of multiple rays
@@ -401,7 +438,7 @@ public class BlackHoleMain extends JPanel implements ActionListener{
 			xprime *= scale;
 			
 			yprime *= -scale;
-			if(r.isAlive && ((r.x<2 && r.x > -2))){ //maybe make it -70 so that the whole hole is shown
+			if(r.isAlive && ((r.x<5 && r.x > -5))){ //maybe make it -70 so that the whole hole is shown
 			//if(r.isAlive && r.x < 50 && r.x > -50) {
 				g2d.fillRect((int)xprime +300, (int)yprime + 400, 2 , 2); //for now this only uses 1 ray. in the future i will make an array list of multiple rays
 			}
@@ -483,32 +520,45 @@ public class BlackHoleMain extends JPanel implements ActionListener{
 class Ray extends JPanel{
 	public int x;
 	public int y, z;
-	public double r;
+	public double r, t, alpha;
 	public double phi, theta;
-	public double dr;
+	public double dr, dt;
 	public double dphi, dtheta;
 	public volatile boolean isAlive;
 	public Color color;
+	private final double c = 299792458;
+	private final double r_s = 100;
+//	private BlackHoleSliders bh;
 	
 	public Ray(int xx, int yy, int zz) {
+	//	bh = new BlackHoleSliders(90, 0);
+	//	alpha = bh.alphas.getValue();
+		
+		t = 0;
 		z = zz;
 		x = xx;
 		y = yy;
 		r = Math.sqrt(xx * xx + yy * yy + zz * zz);
 		phi = Math.atan2(yy, xx);
 		theta = Math.acos(z / r);
-		dr = (x * 10000 + y * 0) / r;
+		dr = (x * 10000) / r;
 		dphi = (- y * 10000) / (x*x + y*y);//(x * 0 - y * 10000) / (r * r) or -(y * 10000) / (x * x + y * y) or (y * 10000) / ((r * r) * (Math.sin(theta) * Math.sin(theta)))
 		dtheta = ((x * 10000) * z ) / (r * r * Math.hypot(x,y));//((x * 10000) * z) / (r * r * Math.hypot(x,y)) or (-z * dr) / ((r * r) * (Math.sin(theta) * Math.sin(theta)))
+		//dt = (1.0 / c) * Math.sqrt((dr * dr) / ((1.0 - (r_s / r)) * (1.0 - (r_s / r))) + (r * r * (dtheta * dtheta + Math.sin(theta) * Math.sin(theta) * dphi * dphi)) / (1.0 - r_s / r));
+		//dr = -c * (1 - r_s / r);
+		//dtheta = (c / r) * Math.sqrt(1 - r_s / r) * Math.cos(alpha);
+		//dphi = (c / (r * Math.sin(theta))) * Math.sqrt(1 - r_s / r) * Math.sin(alpha);
+		dt = c * (1 - r_s / r);
 		isAlive = true;
 		color = Color.yellow;
+		dt = 0.01;
 	}
 }
 
 
 class BlackHoleSliders extends JPanel implements ChangeListener{
 	public double alpha, beta;
-	private JSlider alphas, betas;
+	public JSlider alphas, betas;
 	private JLabel alphal,betal;
 	public BlackHoleSliders(int initialA, int initialB) {
 		alphal = new JLabel("β = " + initialA + "\u00B0");
