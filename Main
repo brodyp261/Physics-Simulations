@@ -65,7 +65,7 @@ public class Main implements ActionListener{
 		EDesc.setFont(new Font("Serif", Font.ITALIC, 10));
 		hi.add(EDesc);
 		
-		BHDesc = new JLabel("<html>Uses RK4 to calculate the null geodesic for individual light rays around a dormant black hole, rendering gravitational lensing around the black hole");
+		BHDesc = new JLabel("<html>Uses RK4 to calculate the null geodesic for individual light rays around a non-rotating, dormant black hole, showing how light moves around it");
 		BHDesc.setForeground(Color.WHITE);
 		BHDesc.setBounds(610, 660, 340, 170);
 		BHDesc.setFont(new Font("Serif", Font.ITALIC, 10));
