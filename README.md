@@ -7,6 +7,6 @@ Simulations include:
 -Entropy
 -Particle Life
 -Double Pendulum
--Black Hole (unfinished)
+-Black Hole
 
 I want to give special thanks to my AP CSA teacher who taught me all the java I know and my family for making it possible for me to go through with my passion
