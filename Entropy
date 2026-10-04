@@ -193,8 +193,12 @@ public class EntropyMain implements ActionListener, ChangeListener{
 		for(int i = numBoxesToStartWithParticles; i < numBoxes * numBoxes; i++) {
 			panels.get(i).particles = 0;
 		}
+		int i = 0;
 		for(EntropyPanel p : panels) {
+			if(i > numBoxesToStartWithParticles)
+				p.particles = 0;
 			p.repaint();
+			i++;
 		}
 		Logomega = setOmega(panels);
 		S = setS(Logomega);
