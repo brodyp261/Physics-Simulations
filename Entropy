@@ -30,7 +30,7 @@ public class EntropyMain implements ActionListener, ChangeListener{
 	private int numBoxes; //number of boxes, keep it the same for now
 	private int numBoxesToStartWithParticles; //self explanatory
 	private double S; //Entropy of a given system
-	private final double k = 1.380649E10-23; //Joules / Kelvin, not relative units (it doesn't equal 1) 
+	private final double k = 1.380649E-23; //Joules / Kelvin, not relative units (it doesn't equal 1) 
 	
 	private JLabel EntropyAtAPoint, numParts, numBoxesWP;
 	private JButton start, reset; //turn the simulation on/off
