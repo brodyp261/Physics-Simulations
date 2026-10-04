@@ -67,7 +67,7 @@ public class HydrogenMain implements ChangeListener, ActionListener{
 		sliderangle = new JSlider(0, 360, 0);
 	//	sliderz = new JSlider(-245, 245, 0);
 		slideralpha = new JSlider(0, 360, 0);
-		slidern = DrawSlider(10, 1, 3);
+		slidern = DrawSlider(8, 1, 3);
 		sliderl = DrawSlider(n - 1, 0, 2);
 		sliderm = DrawSlider(l, -l, 0);
 		//sliderz.addChangeListener(this);
@@ -213,9 +213,7 @@ public class HydrogenMain implements ChangeListener, ActionListener{
 	
 	@Override
 	public void stateChanged(ChangeEvent e) {
-		if(!slidern.getValueIsAdjusting() && !sliderl.getValueIsAdjusting() && !sliderm.getValueIsAdjusting() && !sliderangle.getValueIsAdjusting() && !slideralpha.getValueIsAdjusting()) {
-		
-		
+		if(!slidern.getValueIsAdjusting() && !sliderl.getValueIsAdjusting() && !sliderm.getValueIsAdjusting()) {// && !sliderangle.getValueIsAdjusting() && !slideralpha.getValueIsAdjusting()
 		
 		n = slidern.getValue();
 		l = sliderl.getValue();
@@ -346,13 +344,13 @@ public class HydrogenMain implements ChangeListener, ActionListener{
 		double anglesin = Math.sin(paint3d.angle);
 		
 		
-		for(int x = -245; x <= 245; x+= 2) {
+		for(int x = -175; x <= 175; x+= 2) {
 				int xp = (x + 245) / 2;
 				
 				
-				for(int y = -245; y <= 245; y+= 2) {
+				for(int y = -175; y <= 175; y+= 2) {
 					int yp = (y + 245) / 2;
-					for(int z = -245; z <= 245; z+= 2) {
+					for(int z = -175; z <= 175; z+= 2) {
 					
 						int zp = (z + 245) / 2;
 						double rel = relProbs[xp][yp][zp];
@@ -415,9 +413,9 @@ public class HydrogenMain implements ChangeListener, ActionListener{
 		else {
 		maxProb = 0;}*/
 		maxProb = 0;
-		for(int x = -245; x <= 245; x+=2 ) {
+		for(int x = -175; x <= 175; x+=2 ) {
 			int xp = (x + 245) / 2;
-			for(int y = -245; y <= 245; y+=2 ) {
+			for(int y = -175; y <= 175; y+=2 ) {
 					//spherical cords
 				int yp = (y + 245) / 2;
 					double r = Math.hypot(Math.hypot(x, y), z);
@@ -426,7 +424,9 @@ public class HydrogenMain implements ChangeListener, ActionListener{
 					double phi = Math.atan2(z , x);
 					phi = 0;
 					
-					double probability = psi(n, l, m, r, theta, phi) * psi(n, l, m, r, theta, phi);
+					double psi = psi(n, l, m, r, theta, phi);
+					
+					double probability = psi * psi;
 					//double probability = 0.009022774916806286;
 					
 					probs[xp][yp] = probability;
@@ -438,9 +438,9 @@ public class HydrogenMain implements ChangeListener, ActionListener{
 		}
 		
 		//relProb calculation
-		for(int x = -245; x <= 245; x+=2) {
+		for(int x = -175; x <= 175; x+=2) {
 			int xp = (x + 245) / 2;
-			for(int y = -245; y <= 245; y+=2) {
+			for(int y = -175; y <= 175; y+=2) {
 				int yp = (y + 245) / 2;
 					if(x == 0 && y == 0 && z == 0) {
 						probs[xp][yp] = 0;
@@ -461,12 +461,12 @@ public class HydrogenMain implements ChangeListener, ActionListener{
 		double maxProb = Double.MIN_VALUE;
 		//To prevent probabilities from cutting off
 		
-		for(int x = -245; x <= 245; x+= 2) {
+		for(int x = -175; x <= 175; x+= 2) {
 			int xp = (x + 245)/2;
 			
-			for(int y = -245; y <= 245; y+= 2) {
+			for(int y = -175; y <= 175; y+= 2) {
 				int yp = (y+245)/2;
-					for(int z = -245; z <= 245; z += 2) {
+					for(int z = -175; z <= 175; z += 2) {
 					int zp = (z +245)/2;
 					double r = Math.sqrt(x * x + y * y + z * z);
 					
@@ -486,11 +486,11 @@ public class HydrogenMain implements ChangeListener, ActionListener{
 		//relProb calculation 
 		
 		//double[][][] relProbs = new double[491][491][491];
-		for(int x = -245; x <= 245; x+= 2){
+		for(int x = -175; x <= 175; x+= 2){
 			int xp = (x + 245) / 2;
-			for(int y = -245; y <= 245; y+= 2) {
+			for(int y = -175; y <= 175; y+= 2) {
 				int yp = (y + 245) / 2;
-				for(int z = -245; z <= 245; z+= 2) {
+				for(int z = -175; z <= 175; z+= 2) {
 					int zp = (z + 245) / 2;
 					if(x == 0 && y == 0 && z == 0) {
 						probs[xp][yp][zp] = 0;
@@ -632,298 +632,3 @@ public class HydrogenMain implements ChangeListener, ActionListener{
 	  }
 }
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.geom.Rectangle2D;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Random;
-
-class Paint3d extends JPanel{
-	
-	public ArrayList<Point3d> points;
-	public double[][][] relProbs;
-	public int n;
-	public int l;
-	public int m;
-	public double angle;
-	public boolean Collapse;
-	public double alpha;
-	public double tempx;
-	public double tempy;
-	private JLabel probCurrent;
-	
-	public Paint3d() {
-		alpha = 0;
-		angle = 0.0;
-		n = 3;
-		l = 2;
-		m = 0;
-		Collapse = false;
-		probCurrent = new JLabel("Probablity current:tttret");
-		probCurrent.setBounds(0, 0, 500, 100);
-		probCurrent.setForeground(Color.WHITE);
-	}
-	
-	
-	
-	
-	@Override
-	public void paintComponent(Graphics g) {
-		
-		super.paintComponent(g);
-		
-		Graphics2D g2d = (Graphics2D)g;
-		if(!Collapse) {
-		
-		for(Point3d temp: points) {
-			g2d.setPaint(temp.color);
-			g2d.fillOval(2 * ((int)Math.round(temp.x) + 245), 2 * ((int)Math.round(temp.y) + 245), 5, 5);
-		}
-		}
-		else {
-			Random hi = new Random();
-			
-			for(int x = -245; x <= 245; x++) {
-				for(int y = -245; y <= 245; y++) {
-					for(int z = -245; z<= 245; z++) {
-						if((int)tempx == x && (int)tempy == y) {
-							
-							
-							g2d.setPaint(Color.BLUE);
-							g2d.fillOval(2 * ((int)(tempx) + 245), 2 * ((int)(tempy) + 245), 2, 2);
-						}
-						if(x == 0 && y == 0 && z == 0) {
-							double alphacos = Math.cos(alpha);
-							double alphasin = Math.sin(alpha);
-							double anglecos = Math.cos(angle);
-							double anglesin = Math.sin(angle);
-							
-							double x1 = x;
-							double y1 = y * alphacos - z * alphasin;
-							double z1 = y * alphasin + z * alphacos;
-									
-							
-							double xprime = (x1 * anglecos - z1 * anglesin);
-							double yprime =y1;
-							double zprime = (-x1 * anglesin + z1 * anglecos);
-						
-							double scale = 300 / (zprime + 500);
-							xprime *= scale;
-							yprime *= scale;
-							g2d.setPaint(Color.RED);
-							g2d.fillOval(2 * ((int)xprime + 245), 2 * ((int)yprime + 245), 9, 9);
-						}
-						else {
-							
-							//int tempz = (int)points.get(hi.nextInt(points.size())).z; maybe use this but it doesn't change much
-							
-						}
-					}
-				}
-			}
-		}
-		probCurrent.setText("hi");
-		
-	}
-	
-	
-	
-}
-
-
-
-
-class Point3d{
-	public double x;
-	public double y;
-	public double z;
-	public Color color;
-	public Point3d(double xx, double yy, double zz, Color c) {
-		x = xx;
-		y = yy;
-		z = zz;
-		color = c;
-	}
-	public double getZ() {
-		return z;
-	}
-}
-import java.awt.*;
-import java.awt.geom.Rectangle2D;
-
-import javax.swing.*;
-import java.util.Random;
-import java.util.ArrayList;
-class Paint2d extends JPanel{
-	public int z;
-	public double[][] relProbs;
-	public int n;
-	public int l;
-	public int m;
-	public boolean Collapse;
-	private double maxProb;
-	public int tempx, tempy;
-	
-	public Paint2d(double[][] rel, double max) {
-		relProbs = rel;
-		n = 3;
-		l = 2;
-		m = 0;
-		Collapse = false;
-		maxProb = max;
-		z = 0;
-		ArrayList<Pointx> points = new ArrayList<Pointx>();
-		
-		for(int x = -245; x <= 245; x++) {
-			int xp = (x + 245) / 2;
-			for(int y = -245; y <= 245; y++) {
-				int yp = (y + 245) / 2;
-				if(relProbs[xp][yp] > 0.005) {
-					int chance = (int)(relProbs[xp][yp] * 1000);
-					for(int i = 1; i <= chance; i++) {
-						points.add(new Pointx(x, y));
-					}
-				}
-			}
-		}
-		Random hi = new Random();
-		int randint = hi.nextInt(points.size());
-	
-		Pointx testpoint = points.get(randint);
-		tempx = testpoint.x;
-		tempy = testpoint.y;
-	}
-	
-	@Override
-	public void paintComponent(Graphics g) {
-		super.paintComponent(g);
-		Graphics2D g2d = (Graphics2D)g;
-		if(!Collapse) {
-		for(int x = -245; x <= 245; x+=2) {
-			int xp = (x + 245) / 2;
-			for(int y = -245; y <= 245; y+=2) {
-				int yp = (y + 245) / 2;
-				double relProb = relProbs[xp][yp];
-				
-				if(x == 0 && y == 0 && z == 0) {
-					g2d.setPaint(Color.RED);
-					Rectangle2D.Double rect = new Rectangle2D.Double(.5 *(x + 245), .5 *(y + 245), 2, 2);
-					g2d.fill(rect);
-				}
-				else if(relProb > 0.2) {
-					g2d.setPaint(Color.WHITE);//0xffffff
-					Rectangle2D.Double rect = new Rectangle2D.Double(.5 *(x + 245), .5 *(y + 245), 2, 2);
-					g2d.fill(rect);
-				}
-				else if(relProb > 0.15) {
-					g2d.setPaint(Color.YELLOW);//0xfcfccc
-					Rectangle2D.Double rect = new Rectangle2D.Double(.5 *(x + 245), .5 *(y + 245), 2, 2);
-					g2d.fill(rect);
-				}
-				else if(relProb > 0.1) {
-					g2d.setPaint(Color.ORANGE);//0xffed9e
-					Rectangle2D.Double rect = new Rectangle2D.Double(.5 *(x + 245), .5 *(y + 245), 2, 2);
-					g2d.fill(rect);
-				}
-				else if(relProb > 0.05) {
-					g2d.setPaint(Color.RED);//0xffe46c
-					Rectangle2D.Double rect = new Rectangle2D.Double(.5 *(x + 245), .5 *(y + 245), 2, 2);
-					g2d.fill(rect);
-				}
-				else if(relProb > 0.01) {
-					g2d.setPaint(Color.PINK);//0xf3bf3a
-					Rectangle2D.Double rect = new Rectangle2D.Double(.5 *(x + 245), .5 *(y + 245), 2, 2);
-					g2d.fill(rect);
-				}
-				else if(relProb > 0.005) {
-					g2d.setPaint(Color.MAGENTA);//0xad6028
-					Rectangle2D.Double rect = new Rectangle2D.Double(.5 *(x + 245), .5 *(y + 245), 2, 2);
-					g2d.fill(rect);
-				}
-				else if(relProb > 0.001) {
-					g2d.setPaint(new Color(128, 0, 128));//0x72420a
-					Rectangle2D.Double rect = new Rectangle2D.Double(.5 *(x + 245), .5 *(y + 245), 2, 2);
-					g2d.fill(rect);
-				}
-				else if(relProb > 0.0005) {
-					g2d.setPaint(Color.BLUE);//0x402a0a
-					Rectangle2D.Double rect = new Rectangle2D.Double(.5 *(x + 245), .5 *(y + 245), 2, 2);
-					g2d.fill(rect);
-				}
-				else if(relProb > 0.0001) {
-					
-					g2d.setPaint(new Color(0x00008B));//0x2e1f08
-				Rectangle2D.Double rect = new Rectangle2D.Double(.5 *(x + 245), .5 *(y + 245), 2, 2);
-					g2d.fill(rect);
-				}
-			}
-		}
-		}
-		else {
-			
-		
-			
-			for(int x = -245; x <= 245; x++) {
-				for(int y = -245; y <= 245; y++) {
-					if(x == 0 && y == 0) {
-						g2d.setPaint(Color.RED);
-						Rectangle2D.Double rect = new Rectangle2D.Double(.5 *(x + 245), .5 *(y + 245), 2, 2);
-						g2d.fill(rect);
-					}
-					else if(x == tempx && y == tempy) {
-						g2d.setPaint(Color.BLUE);
-						Rectangle2D.Double rect = new Rectangle2D.Double(.5 *(x + 245), .5 *(y + 245), 1, 1);
-						g2d.fill(rect);
-					}
-				}
-			}
-			ArrayList<Pointx> points = new ArrayList<Pointx>();
-			
-			for(int x = -245; x <= 245; x+=2) {
-				for(int y = -245; y <= 245; y+=2) {
-					if(relProbs[(x + 245)/2][(y + 245)/2] > 0.005) {
-						int chance = (int)(relProbs[(x + 245)/2][(y + 245)/2] * 1000);
-						for(int i = 1; i <= chance; i++) {
-							points.add(new Pointx(x, y));
-						}
-					}
-				}
-			}
-			Random hi = new Random();
-			int randint = hi.nextInt(points.size());
-		
-			Pointx testpoint = points.get(randint);
-			tempx = testpoint.x;
-			tempy = testpoint.y;
-			
-		}
-	}
-	
-	public int getRandom() {
-		Random hi = new Random();
-		return hi.nextInt(246);
-	}
-	
-}
-
-class Pointx{
-	public int x;
-	public int y;
-	public Pointx(int xx, int yy) {
-		x = xx;
-		y = yy;
-	}
-	public int getX() {
-		return x;
-	}
-	public int getY() {
-		return y;
-	}
-}
