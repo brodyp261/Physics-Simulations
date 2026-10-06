@@ -292,7 +292,8 @@ public class EntropyMain implements ActionListener, ChangeListener{
 			}
 			randTest.particles --;
 			panels.get(possibleIndexes[randIndex2]).particles ++;
-			double tempS = setS(setOmega(panels));
+			Logomega = setOmega(panels);
+			double tempS = setS(Logomega);
 			double deltaS = tempS - S;
 			
 			if(deltaS >= 0) { //Originally had a hard cutoff of -1E0-5 * k, but switched it to metropolis probability for smoother sims
