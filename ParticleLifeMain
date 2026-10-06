@@ -28,7 +28,7 @@ public class ParticleLifeMain extends JPanel implements ActionListener, ChangeLi
 	private JPanel screen, sliderpanel, labelpanel;
 	private ArrayList<Particle> points;
 	private volatile boolean go = false;
-	private JButton start;
+	private JButton start, reset;
 	private Thread thread;
 	private volatile boolean isStepping;
 	private volatile boolean isRunning;
@@ -49,23 +49,23 @@ public class ParticleLifeMain extends JPanel implements ActionListener, ChangeLi
 
 		lwl = new JLabel("R   B    G   Y    W");
 		lwl.setForeground(Color.WHITE);
-		lwl.setBounds(55, 160, 300, 50);
+		lwl.setBounds(95, 160, 300, 50);
 		
 		udl = new JLabel("<html>R<br>B<br><br>G<br>Y<br>W<html>");
 		udl.setForeground(Color.WHITE);
-		udl.setBounds(30, 100, 80, 300);
+		udl.setBounds(70, 100, 80, 300);
 		
 		help = new JLabel("<html>Gray = Repel with a force of 0.6<br>Blue = Repel with a force of 0.4<br>Cyan = Repel with a force of 0.2<br>White = Neutral<br>Yellow = Attract with a force of 0.2<br>Pink = Attract with a force of 0.4<br>Red = Attract with a force of 0.6<html>");
-		help.setBounds(28, 300, 500, 200);
+		help.setBounds(68, 310, 500, 200);
 		help.setForeground(Color.WHITE);
 		
 		topl = new JLabel("Target Color");
 		topl.setForeground(Color.WHITE);
-		topl.setBounds(65, 140, 300, 50);
+		topl.setBounds(105, 140, 300, 50);
 		
 		sidel = new JLabel("<html>A<br>c<br>t<br>i<br>n<br>g<br><br>C<br>o<br>l<br>o<br>r<html>");
 		sidel.setForeground(Color.WHITE);
-		sidel.setBounds(10, 100, 80, 300);
+		sidel.setBounds(50, 100, 80, 300);
 		
 		frame = new JFrame("Particle Life Simulation");
 		frame.setSize(1600,1000);
@@ -114,127 +114,127 @@ public class ParticleLifeMain extends JPanel implements ActionListener, ChangeLi
 		
 		
 		RtoRb = new JButton();
-		RtoRb.setBounds(50, 200, 20, 20);		
+		RtoRb.setBounds(90, 200, 20, 20);		
 		RtoRb.setBackground(getColor(RtoR));
 		forces[0][0] = RtoR;
 		
 		RtoBb = new JButton();
-		RtoBb.setBounds(70, 200, 20, 20);		
+		RtoBb.setBounds(110, 200, 20, 20);		
 		RtoBb.setBackground(getColor(RtoB));
 		forces[0][1] = RtoB;
 		
 		RtoGb = new JButton();
-		RtoGb.setBounds(90, 200, 20, 20);		
+		RtoGb.setBounds(130, 200, 20, 20);		
 		RtoGb.setBackground(getColor(RtoG));
 		forces[0][2] = RtoG;
 		
 		RtoYb = new JButton();
-		RtoYb.setBounds(110, 200, 20, 20);		
+		RtoYb.setBounds(150, 200, 20, 20);		
 		RtoYb.setBackground(getColor(RtoY));
 		forces[0][3] = RtoY;
 		
 		RtoWb = new JButton();
-		RtoWb.setBounds(130, 200, 20, 20);		
+		RtoWb.setBounds(170, 200, 20, 20);		
 		RtoWb.setBackground(getColor(RtoW));
 		forces[0][4] = RtoW;
 		
 		BtoRb = new JButton();
-		BtoRb.setBounds(50, 220, 20, 20);		
+		BtoRb.setBounds(90, 220, 20, 20);		
 		BtoRb.setBackground(getColor(BtoR));
 		forces[1][0] = BtoR;
 		
 		BtoBb = new JButton();
-		BtoBb.setBounds(70, 220, 20, 20);		
+		BtoBb.setBounds(110, 220, 20, 20);		
 		BtoBb.setBackground(getColor(BtoB));
 		forces[1][1] = BtoB;
 		
 		BtoGb = new JButton();
-		BtoGb.setBounds(90, 220, 20, 20);		
+		BtoGb.setBounds(130, 220, 20, 20);		
 		BtoGb.setBackground(getColor(BtoG));
 		forces[1][2] = BtoG;
 		
 		BtoYb = new JButton();
-		BtoYb.setBounds(110, 220, 20, 20);		
+		BtoYb.setBounds(150, 220, 20, 20);		
 		BtoYb.setBackground(getColor(BtoY));
 		forces[1][3] = BtoY;
 		
 		BtoWb = new JButton();
-		BtoWb.setBounds(130, 220, 20, 20);		
+		BtoWb.setBounds(170, 220, 20, 20);		
 		BtoWb.setBackground(getColor(BtoW));
 		forces[1][4] = BtoW;
 		
 		GtoRb = new JButton();
-		GtoRb.setBounds(50, 240, 20, 20);		
+		GtoRb.setBounds(90, 240, 20, 20);		
 		GtoRb.setBackground(getColor(GtoR));
 		forces[2][0] = GtoR;
 		
 		GtoBb = new JButton();
-		GtoBb.setBounds(70, 240, 20, 20);		
+		GtoBb.setBounds(110, 240, 20, 20);		
 		GtoBb.setBackground(getColor(GtoB));
 		forces[2][1] = GtoB;
 		
 		GtoGb = new JButton();
-		GtoGb.setBounds(90, 240, 20, 20);		
+		GtoGb.setBounds(130, 240, 20, 20);		
 		GtoGb.setBackground(getColor(GtoG));
 		forces[2][2] = GtoG;
 		
 		GtoYb = new JButton();
-		GtoYb.setBounds(110, 240, 20, 20);		
+		GtoYb.setBounds(150, 240, 20, 20);		
 		GtoYb.setBackground(getColor(GtoY));
 		forces[2][3] = GtoY;
 		
 		GtoWb = new JButton();
-		GtoWb.setBounds(130, 240, 20, 20);		
+		GtoWb.setBounds(170, 240, 20, 20);		
 		GtoWb.setBackground(getColor(GtoW));
 		forces[2][4] = GtoW;
 		
 		YtoRb = new JButton();
-		YtoRb.setBounds(50, 260, 20, 20);		
+		YtoRb.setBounds(90, 260, 20, 20);		
 		YtoRb.setBackground(getColor(YtoR));
 		forces[3][0] = YtoR;
 		
 		YtoBb = new JButton();
-		YtoBb.setBounds(70, 260, 20, 20);		
+		YtoBb.setBounds(110, 260, 20, 20);		
 		YtoBb.setBackground(getColor(YtoB));
 		forces[3][1] = YtoB;
 		
 		YtoGb = new JButton();
-		YtoGb.setBounds(90, 260, 20, 20);		
+		YtoGb.setBounds(130, 260, 20, 20);		
 		YtoGb.setBackground(getColor(YtoG));
 		forces[3][2] = YtoG;
 		
 		YtoYb = new JButton();
-		YtoYb.setBounds(110, 260, 20, 20);		
+		YtoYb.setBounds(150, 260, 20, 20);		
 		YtoYb.setBackground(getColor(YtoY));
 		forces[3][3] = YtoY;
 		
 		YtoWb = new JButton();
-		YtoWb.setBounds(130, 260, 20, 20);		
+		YtoWb.setBounds(170, 260, 20, 20);		
 		YtoWb.setBackground(getColor(YtoW));
 		forces[3][4] = YtoW;
 		
 		WtoRb = new JButton();
-		WtoRb.setBounds(50, 280, 20, 20);		
+		WtoRb.setBounds(90, 280, 20, 20);		
 		WtoRb.setBackground(getColor(WtoR));
 		forces[4][0] = WtoR;
 		
 		WtoBb = new JButton();
-		WtoBb.setBounds(70, 280, 20, 20);		
+		WtoBb.setBounds(110, 280, 20, 20);		
 		WtoBb.setBackground(getColor(WtoB));
 		forces[4][1] = WtoB;
 		
 		WtoGb = new JButton();
-		WtoGb.setBounds(90, 280, 20, 20);		
+		WtoGb.setBounds(130, 280, 20, 20);		
 		WtoGb.setBackground(getColor(WtoG));
 		forces[4][2] = WtoG;
 		
 		WtoYb = new JButton();
-		WtoYb.setBounds(110, 280, 20, 20);		
+		WtoYb.setBounds(150, 280, 20, 20);		
 		WtoYb.setBackground(getColor(WtoY));
 		forces[4][3] = WtoY;
 		
 		WtoWb = new JButton();
-		WtoWb.setBounds(130, 280, 20, 20);		
+		WtoWb.setBounds(170, 280, 20, 20);		
 		WtoWb.setBackground(getColor(WtoW));
 		forces[4][4] = WtoW;
 		
@@ -278,6 +278,11 @@ public class ParticleLifeMain extends JPanel implements ActionListener, ChangeLi
 		start = new JButton("Off");
 		start.setBounds(50, 75, 200, 50);
 		start.addActionListener(this);
+		
+		reset = new JButton("Reset Particles");
+		reset.setBounds(50,500,200,50);
+		reset.addActionListener(this);
+		
 		points = new ArrayList<Particle>(100);
 		go = false;
 		isStepping = false;
@@ -320,6 +325,7 @@ public class ParticleLifeMain extends JPanel implements ActionListener, ChangeLi
 		frame.add(sidel);
 		frame.add(udl);
 		frame.add(start);
+		frame.add(reset);
 		frame.add(back);
 		//frame.add(shorthandlabel);
 		frame.add(RtoRb);
@@ -452,12 +458,17 @@ public class ParticleLifeMain extends JPanel implements ActionListener, ChangeLi
 					points.remove(i);
 				}*/
 				go = false;
-				while(isStepping) {
-					
-				}
-				points.clear();
-				this.spawnDots();
 			}
+		}
+		
+		if(e.getSource() == reset) {
+			go = false;
+			start.setText("Off");
+			while(isStepping) {
+				
+			}
+			points.clear();
+			this.spawnDots();
 		}
 		
 		if(e.getSource() == RtoRb) {
